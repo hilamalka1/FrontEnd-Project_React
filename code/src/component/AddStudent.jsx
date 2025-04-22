@@ -1,88 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   TextField,
   Button,
   Typography,
   MenuItem
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
-const academicYears = ['1', '2', '3', '4'];
-
-const defaultStudents = [
-  {
-    firstName: 'Alice',
-    lastName: 'Smith',
-    studentId: '123456789',
-    email: 'alice.smith@example.com',
-    academicYear: '1',
-    studyProgram: 'Computer Science'
-  },
-  {
-    firstName: 'Bob',
-    lastName: 'Johnson',
-    studentId: '987654321',
-    email: 'bob.johnson@example.com',
-    academicYear: '2',
-    studyProgram: 'Software Engineering'
-  },
-  {
-    firstName: 'Clara',
-    lastName: 'Newton',
-    studentId: '456789123',
-    email: 'clara.newton@example.com',
-    academicYear: '3',
-    studyProgram: 'Biology'
-  },
+const academicYears = ["1", "2", "3", "4"];
+const degreePrograms = [
+  "Computer Science",
+  "Software Engineering",
+  "Business Administration",
+  "Biology",
+  "Psychology",
+  "Economics",
+  "Education",
+  "Architecture"
 ];
 
 export default function AddStudent() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    studentId: '',
-    email: '',
-    academicYear: '',
-    studyProgram: '',
+    firstName: "",
+    lastName: "",
+    studentId: "",
+    email: "",
+    academicYear: "",
+    degreeProgram: "",
   });
 
   const [error, setError] = useState({});
   const [students, setStudents] = useState([]);
-  const [courseList, setCourseList] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const saved = localStorage.getItem('students');
+    const saved = localStorage.getItem("students");
     if (saved) {
       setStudents(JSON.parse(saved));
-    } else {
-      localStorage.setItem('students', JSON.stringify(defaultStudents));
-      setStudents(defaultStudents);
-    }
-
-    const savedCourses = localStorage.getItem('courses');
-    if (savedCourses) {
-      const parsed = JSON.parse(savedCourses);
-      const courseNames = parsed.map(c => c.courseName);
-      setCourseList(courseNames);
     }
   }, []);
 
   const validateField = (name, value) => {
-    let msg = '';
+    let msg = "";
 
     if (!value.trim()) {
-      msg = 'This field is required';
+      msg = "This field is required";
     } else {
-      if ((name === 'firstName' || name === 'lastName') && !/^[A-Za-z\u0590-\u05FF]{2,}$/.test(value)) {
-        msg = 'Only Hebrew or English letters allowed, min 2 characters';
+      if ((name === "firstName" || name === "lastName") && !/^[A-Za-z\u0590-\u05FF]{2,}$/.test(value)) {
+        msg = "Only Hebrew or English letters allowed, min 2 characters";
       }
-      if (name === 'studentId') {
-        if (!/^\d{9}$/.test(value)) msg = 'Student ID must be 9 digits';
+      if (name === "studentId") {
+        if (!/^\d{9}$/.test(value)) msg = "Student ID must be 9 digits";
       }
-      if (name === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        msg = 'Invalid email format';
+      if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        msg = "Invalid email format";
       }
     }
 
@@ -108,15 +80,15 @@ export default function AddStudent() {
 
     const hasError = Object.values(newErrors).some(Boolean);
     if (hasError) {
-      alert('Please fix all errors before submitting');
+      alert("Please fix all errors before submitting");
       return;
     }
 
     const updated = [...students, formData];
     setStudents(updated);
-    localStorage.setItem('students', JSON.stringify(updated));
-    alert('Student added successfully!');
-    navigate('/students');
+    localStorage.setItem("students", JSON.stringify(updated));
+    alert("Student added successfully!");
+    navigate("/students");
   };
 
   return (
@@ -124,10 +96,10 @@ export default function AddStudent() {
       component="form"
       onSubmit={handleSave}
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         maxWidth: 500,
-        mx: 'auto',
+        mx: "auto",
         p: 4,
         gap: 2,
       }}
@@ -178,22 +150,24 @@ export default function AddStudent() {
         helperText={error.academicYear}
       >
         {academicYears.map((year) => (
-          <MenuItem key={year} value={year}>{year}</MenuItem>
+          <MenuItem key={year} value={year}>
+            {year}
+          </MenuItem>
         ))}
       </TextField>
 
       <TextField
         select
-        label="Course *"
-        name="studyProgram"
-        value={formData.studyProgram}
+        label="Degree Program *"
+        name="degreeProgram"
+        value={formData.degreeProgram}
         onChange={handleChange}
-        error={!!error.studyProgram}
-        helperText={error.studyProgram}
+        error={!!error.degreeProgram}
+        helperText={error.degreeProgram}
       >
-        {courseList.map((course, i) => (
-          <MenuItem key={i} value={course}>
-            {course}
+        {degreePrograms.map((program, index) => (
+          <MenuItem key={index} value={program}>
+            {program}
           </MenuItem>
         ))}
       </TextField>
@@ -202,7 +176,7 @@ export default function AddStudent() {
         Save
       </Button>
       <Button variant="outlined" onClick={() => navigate(-1)}>
-        Back
+        Exit
       </Button>
     </Box>
   );

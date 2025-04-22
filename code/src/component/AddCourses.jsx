@@ -154,7 +154,7 @@ export default function AddCourse() {
       />
 
       <TextField
-        label="Course Name *"
+        label="Course Name"
         name="courseName"
         value={formData.courseName}
         onChange={handleChange}
@@ -175,7 +175,7 @@ export default function AddCourse() {
 
       <TextField
         select
-        label="Semester *"
+        label="Semester "
         name="semester"
         value={formData.semester}
         onChange={handleChange}
@@ -191,7 +191,7 @@ export default function AddCourse() {
       </TextField>
 
       <TextField
-        label="Lecturer Name *"
+        label="Lecturer Name"
         name="lecturerName"
         value={formData.lecturerName}
         onChange={handleChange}
@@ -201,7 +201,7 @@ export default function AddCourse() {
       />
 
       <TextField
-        label="Lecturer Email *"
+        label="Lecturer Email"
         name="lecturerEmail"
         type="email"
         value={formData.lecturerEmail}
@@ -216,7 +216,7 @@ export default function AddCourse() {
       </Button>
 
       <Button variant="outlined" onClick={() => navigate(-1)}>
-        Back
+        Exit
       </Button>
 
       {/* ✅ Course summary dialog */}
