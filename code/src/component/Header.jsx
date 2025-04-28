@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 
 export default function Header() {
   const navLinks = [
-    { label: 'Home Page', path: '/' },
+    { label: 'Home Page1', path: '/' },
     { label: 'Students', path: '/students' },
     { label: 'Courses', path: '/courses' },
     { label: 'Assignments', path: '/assignments' },
