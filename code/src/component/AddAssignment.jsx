@@ -104,11 +104,15 @@ export default function AddAssignment() {
         flexDirection: "column",
         maxWidth: 500,
         mx: "auto",
+        my: 4,
         p: 4,
         gap: 2,
+        boxShadow: 3,
+        borderRadius: 2,
+        backgroundColor: "#f5f5f5",
       }}
     >
-      <Typography variant="h5" align="center">
+      <Typography variant="h5" align="center" fontWeight="bold">
         {editingAssignment ? "Edit Assignment" : "Add New Assignment"}
       </Typography>
 
@@ -140,9 +144,8 @@ export default function AddAssignment() {
         onChange={handleChange}
         error={!!error.dueDate}
         helperText={error.dueDate}
-        InputLabelProps={{
-          shrink: true,
-        }}
+        InputLabelProps={{ shrink: true }}
+        inputProps={{ min: new Date().toISOString().split("T")[0] }}
       />
 
       <TextField
@@ -163,10 +166,18 @@ export default function AddAssignment() {
         )}
       </TextField>
 
-      <Button variant="contained" type="submit">
+      <Button
+        variant="contained"
+        type="submit"
+        sx={{ backgroundColor: "#66bb6a", '&:hover': { backgroundColor: "#4caf50" } }}
+      >
         {editingAssignment ? "Update Assignment" : "Save Assignment"}
       </Button>
-      <Button variant="outlined" onClick={() => navigate("/assignments")}>
+
+      <Button
+        variant="outlined"
+        onClick={() => navigate("/assignments")}
+      >
         Cancel
       </Button>
     </Box>

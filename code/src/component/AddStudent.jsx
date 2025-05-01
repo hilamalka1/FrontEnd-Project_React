@@ -49,16 +49,25 @@ export default function AddStudent() {
     if (!trimmed) {
       msg = "This field is required";
     } else {
-      if ((name === "firstName" || name === "lastName") && !/^[A-Za-z\u0590-\u05FF\s]{2,}$/.test(trimmed)) {
+      if ((name === "firstName" || name === "lastName") &&
+        !/^[A-Za-z\u0590-\u05FF\s]{2,}$/.test(trimmed)) {
         msg = "Only Hebrew or English letters allowed, min 2 characters";
       }
+
       if (name === "studentId") {
-        if (!/^\d{9}$/.test(trimmed)) msg = "Student ID must be exactly 9 digits";
+        if (!/^\d*$/.test(trimmed)) {
+          msg = "Only digits are allowed in Student ID";
+        } else if (trimmed.length !== 9) {
+          msg = "Student ID must be exactly 9 digits";
+        }
       }
-      if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+
+      if (name === "email" &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
         msg = "Invalid email format";
       }
     }
+
     return msg;
   };
 
@@ -85,11 +94,11 @@ export default function AddStudent() {
       return;
     }
 
-    const saved = localStorage.getItem('students');
+    const saved = localStorage.getItem("students");
     const studentsArray = saved ? JSON.parse(saved) : [];
 
     const existingStudent = studentsArray.find(
-      s => s.studentId === formData.studentId
+      (s) => s.studentId === formData.studentId
     );
 
     if (!editingStudent && existingStudent) {
@@ -97,14 +106,11 @@ export default function AddStudent() {
       return;
     }
 
-    let updated;
-    if (editingStudent) {
-      updated = studentsArray.map(s =>
-        s.studentId === formData.studentId ? formData : s
-      );
-    } else {
-      updated = [...studentsArray, formData];
-    }
+    const updated = editingStudent
+      ? studentsArray.map((s) =>
+          s.studentId === formData.studentId ? formData : s
+        )
+      : [...studentsArray, formData];
 
     localStorage.setItem("students", JSON.stringify(updated));
     alert("Student saved successfully!");
@@ -120,8 +126,12 @@ export default function AddStudent() {
         flexDirection: "column",
         maxWidth: 500,
         mx: "auto",
+        my: 4,
         p: 4,
         gap: 2,
+        boxShadow: 3,
+        borderRadius: 2,
+        backgroundColor: "#f5f5f5",
       }}
     >
       <Typography variant="h5" align="center">
@@ -136,6 +146,7 @@ export default function AddStudent() {
         error={!!error.firstName}
         helperText={error.firstName}
       />
+
       <TextField
         label="Last Name *"
         name="lastName"
@@ -144,6 +155,7 @@ export default function AddStudent() {
         error={!!error.lastName}
         helperText={error.lastName}
       />
+
       <TextField
         label="Student ID (9 digits) *"
         name="studentId"
@@ -153,6 +165,7 @@ export default function AddStudent() {
         helperText={error.studentId}
         disabled={!!editingStudent}
       />
+
       <TextField
         label="Email *"
         name="email"
@@ -161,6 +174,7 @@ export default function AddStudent() {
         error={!!error.email}
         helperText={error.email}
       />
+
       <TextField
         select
         label="Academic Year *"
@@ -193,10 +207,21 @@ export default function AddStudent() {
         ))}
       </TextField>
 
-      <Button variant="contained" type="submit">
+      <Button
+        variant="contained"
+        type="submit"
+        sx={{
+          backgroundColor: "#66bb6a",
+          '&:hover': { backgroundColor: "#4caf50" }
+        }}
+      >
         Save
       </Button>
-      <Button variant="outlined" onClick={() => navigate("/students")}>
+
+      <Button
+        variant="outlined"
+        onClick={() => navigate("/students")}
+      >
         Exit
       </Button>
     </Box>

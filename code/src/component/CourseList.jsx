@@ -1,3 +1,4 @@
+// גרסה מתוקנת של CourseList.jsx - כוללת תצוגה של סטודנטים רשומים + סימון אוטומטי
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -11,7 +12,6 @@ import {
   TableRow,
   Paper,
   IconButton,
-  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -22,15 +22,17 @@ import {
   FormControl,
   OutlinedInput,
   Checkbox,
-  ListItemText
+  ListItemText,
+  Chip,
+  Stack,
+  Divider
 } from "@mui/material";
-import { Add, PersonAdd, Edit } from "@mui/icons-material";
-import { Link, useNavigate } from "react-router-dom";
+import { Add, PersonAdd, Edit, Delete, Close } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 export default function CourseList() {
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
-  const [search, setSearch] = useState("");
   const [selectedDegree, setSelectedDegree] = useState("");
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [selectedCourseIndex, setSelectedCourseIndex] = useState(null);
@@ -41,25 +43,21 @@ export default function CourseList() {
     const savedCourses = localStorage.getItem("courses");
     const savedStudents = localStorage.getItem("students");
 
-    if (savedCourses) {
-      setCourses(JSON.parse(savedCourses));
-    }
-    if (savedStudents) {
-      setStudents(JSON.parse(savedStudents));
-    }
+    if (savedCourses) setCourses(JSON.parse(savedCourses));
+    if (savedStudents) setStudents(JSON.parse(savedStudents));
   }, []);
 
   const handleAddStudentToCourse = () => {
-    if (selectedCourseIndex !== null && selectedStudents.length > 0) {
+    if (selectedCourseIndex !== null) {
       const updatedCourses = [...courses];
       const course = updatedCourses[selectedCourseIndex];
+      course.enrolledStudents = course.enrolledStudents || [];
 
       selectedStudents.forEach((studentId) => {
         const student = students.find((s) => s.studentId === studentId);
-        const alreadyEnrolled = course.enrolledStudents?.find((s) => s.studentId === studentId);
+        const alreadyEnrolled = course.enrolledStudents.find((s) => s.studentId === studentId);
 
         if (student && !alreadyEnrolled) {
-          if (!course.enrolledStudents) course.enrolledStudents = [];
           course.enrolledStudents.push(student);
         }
       });
@@ -75,40 +73,57 @@ export default function CourseList() {
     navigate("/add-course", { state: { course } });
   };
 
-  const filtered = courses.filter((course) => {
-    const matchesSearch = [
-      course.courseCode,
-      course.courseName,
-      course.lecturerName
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(search.toLowerCase());
+  const handleDeleteCourse = (index) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this course?");
+    if (!confirmDelete) return;
 
-    const matchesDegree = selectedDegree
-      ? course.degreeProgram === selectedDegree
-      : true;
+    const updatedCourses = [...courses];
+    updatedCourses.splice(index, 1);
+    setCourses(updatedCourses);
+    localStorage.setItem("courses", JSON.stringify(updatedCourses));
+  };
 
-    return matchesSearch && matchesDegree;
-  });
+  const handleRemoveStudentFromCourse = (courseIndex, studentId) => {
+    const confirmRemove = window.confirm("Are you sure you want to remove this student?");
+    if (!confirmRemove) return;
+
+    const updatedCourses = [...courses];
+    const course = updatedCourses[courseIndex];
+    course.enrolledStudents = course.enrolledStudents.filter((s) => s.studentId !== studentId);
+
+    setCourses(updatedCourses);
+    localStorage.setItem("courses", JSON.stringify(updatedCourses));
+  };
+
+  const filtered = courses.filter((course) =>
+    selectedDegree ? course.degreeProgram === selectedDegree : true
+  );
+
+  const selectedCourse = selectedCourseIndex !== null ? courses[selectedCourseIndex] : null;
+  const alreadyEnrolledIds = selectedCourse?.enrolledStudents?.map(s => s.studentId) || [];
+
+  useEffect(() => {
+    if (selectedCourseIndex !== null && selectedCourse) {
+      setSelectedStudents(alreadyEnrolledIds);
+    }
+  }, [selectedCourseIndex]);
 
   return (
-    <Box p={4}>
-      <Typography variant="h4" mb={3}>
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h4" mb={3} align="center" fontWeight="bold">
         Course Management
       </Typography>
 
-      <Box display="flex" gap={2} flexWrap="wrap" mb={2}>
-        <Link to="/add-course">
-          <Button variant="contained" startIcon={<Add />}>
-            Add New Course
-          </Button>
-        </Link>
-        <TextField
-          placeholder="Search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <Box display="flex" gap={2} flexWrap="wrap" justifyContent="center" mb={3}>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          sx={{ backgroundColor: "#66bb6a", '&:hover': { backgroundColor: "#4caf50" } }}
+          onClick={() => navigate("/add-course")}
+        >
+          Add New Course
+        </Button>
+
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel>Filter by Degree</InputLabel>
           <Select
@@ -124,23 +139,23 @@ export default function CourseList() {
         </FormControl>
       </Box>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
         <Table>
-          <TableHead>
+          <TableHead sx={{ backgroundColor: "#e8f5e9" }}>
             <TableRow>
-              <TableCell>Code</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Credits</TableCell>
-              <TableCell>Semester</TableCell>
-              <TableCell>Lecturer</TableCell>
-              <TableCell>Degree</TableCell>
-              <TableCell>Students</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Credits</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Semester</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Lecturer</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Degree</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Students</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filtered.map((course, index) => (
-              <TableRow key={course.courseCode || index}>
+              <TableRow key={course.courseCode || index} hover>
                 <TableCell>{course.courseCode}</TableCell>
                 <TableCell>{course.courseName}</TableCell>
                 <TableCell>{course.creditPoints}</TableCell>
@@ -148,25 +163,62 @@ export default function CourseList() {
                 <TableCell>{course.lecturerName}</TableCell>
                 <TableCell>{course.degreeProgram}</TableCell>
                 <TableCell>
-                  {course.enrolledStudents?.map((s) => `${s.firstName} ${s.lastName}`).join(", ") || "-"}
+                  {course.enrolledStudents?.length ? (
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                      {course.enrolledStudents.map((s) => (
+                        <Chip
+                          key={s.studentId}
+                          label={`${s.firstName} ${s.lastName}`}
+                          onDelete={() => handleRemoveStudentFromCourse(index, s.studentId)}
+                          deleteIcon={<Close />}
+                          sx={{ mb: 1 }}
+                        />
+                      ))}
+                    </Stack>
+                  ) : (
+                    "-"
+                  )}
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => setSelectedCourseIndex(index)}>
+                  <IconButton onClick={() => setSelectedCourseIndex(index)} title="Add Students">
                     <PersonAdd />
                   </IconButton>
-                  <IconButton onClick={() => handleEditCourse(course)}>
+                  <IconButton onClick={() => handleEditCourse(course)} title="Edit Course">
                     <Edit />
+                  </IconButton>
+                  <IconButton onClick={() => handleDeleteCourse(index)} title="Delete Course" color="error">
+                    <Delete />
                   </IconButton>
                 </TableCell>
               </TableRow>
             ))}
+
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={8} align="center">
+                  No courses found.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
-      <Dialog open={selectedCourseIndex !== null} onClose={() => setSelectedCourseIndex(null)}>
+      <Dialog open={selectedCourseIndex !== null} onClose={() => setSelectedCourseIndex(null)} maxWidth="sm" fullWidth>
         <DialogTitle>Add Students to Course</DialogTitle>
         <DialogContent>
+          {selectedCourse?.enrolledStudents?.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" fontWeight="bold">Already Enrolled:</Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" mt={1}>
+                {selectedCourse.enrolledStudents.map((s) => (
+                  <Chip key={s.studentId} label={`${s.firstName} ${s.lastName}`} />
+                ))}
+              </Stack>
+              <Divider sx={{ mt: 2 }} />
+            </Box>
+          )}
+
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Select Students</InputLabel>
             <Select
@@ -192,7 +244,13 @@ export default function CourseList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSelectedCourseIndex(null)}>Cancel</Button>
-          <Button onClick={handleAddStudentToCourse} variant="contained">Add</Button>
+          <Button
+            onClick={handleAddStudentToCourse}
+            variant="contained"
+            sx={{ backgroundColor: "#66bb6a", '&:hover': { backgroundColor: "#4caf50" } }}
+          >
+            Add
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

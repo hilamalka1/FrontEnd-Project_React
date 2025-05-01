@@ -14,7 +14,7 @@ import {
   TextField,
 } from "@mui/material";
 import { Add, Edit, Delete } from "@mui/icons-material";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function StudentList() {
   const [students, setStudents] = useState([]);
@@ -49,15 +49,31 @@ export default function StudentList() {
   };
 
   return (
-    <Box p={4}>
-      <Typography variant="h4" mb={3}>Student Management</Typography>
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h4" mb={3} align="center" fontWeight="bold">
+        Student Management
+      </Typography>
 
-      <Box display="flex" justifyContent="center" alignItems="center" gap={2} mb={3}>
-        <Link to="/add-student">
-          <Button variant="contained" startIcon={<Add />}>
-            Add Student
-          </Button>
-        </Link>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        gap={2}
+        mb={3}
+        flexWrap="wrap"
+      >
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          sx={{
+            backgroundColor: "#66bb6a",
+            '&:hover': { backgroundColor: "#4caf50" }
+          }}
+          onClick={() => navigate("/add-student")}
+        >
+          Add Student
+        </Button>
+
         <TextField
           placeholder="Search by name, ID or email"
           value={search}
@@ -66,22 +82,23 @@ export default function StudentList() {
         />
       </Box>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
         <Table>
-          <TableHead>
+          <TableHead sx={{ backgroundColor: "#e0f2f1" }}>
             <TableRow>
-              <TableCell>First Name</TableCell>
-              <TableCell>Last Name</TableCell>
-              <TableCell>Student ID</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Academic Year</TableCell>
-              <TableCell>Degree Program</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>First Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Last Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Student ID</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Academic Year</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Degree Program</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
             {filtered.map((student, index) => (
-              <TableRow key={index}>
+              <TableRow key={index} hover>
                 <TableCell>{student.firstName}</TableCell>
                 <TableCell>{student.lastName}</TableCell>
                 <TableCell>{student.studentId}</TableCell>
@@ -89,11 +106,31 @@ export default function StudentList() {
                 <TableCell>{student.academicYear}</TableCell>
                 <TableCell>{student.degreeProgram}</TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleEdit(student)}><Edit /></IconButton>
-                  <IconButton onClick={() => handleDelete(index)} color="error"><Delete /></IconButton>
+                  <IconButton
+                    onClick={() => handleEdit(student)}
+                    color="primary"
+                    aria-label="edit"
+                  >
+                    <Edit />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleDelete(index)}
+                    color="error"
+                    aria-label="delete"
+                  >
+                    <Delete />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}
+
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  No students found.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

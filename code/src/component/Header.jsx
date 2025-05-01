@@ -15,19 +15,29 @@ export default function Header() {
     { label: 'Courses', path: '/courses' },
     { label: 'Assignments', path: '/assignments' },
     { label: 'Exams', path: '/exams' },
-    { label: 'Events/Messaeges', path: '/events' },
-    { label: 'Info', path: '/info' },        // ✅ קישור לעמוד מידע
-    { label: 'Support', path: '/support' }    // ✅ קישור לעמוד תמיכה
+    { label: 'Events/Messages', path: '/events' },
+    { label: 'Info', path: '/info' },
+    { label: 'Support', path: '/support' }
   ];
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" color="primary">
+      <AppBar
+        position="static"
+        sx={{ bgcolor: 'success.main' }}  
+      >
         <Toolbar sx={{ direction: 'ltr', display: 'flex', gap: 2 }}>
           <Typography
             variant="h6"
-            component="div"
-            sx={{ mr: 2 }}
+            component={Link}
+            to="/"
+            sx={{
+              mr: 2,
+              textDecoration: 'none',
+              color: 'inherit',
+              fontWeight: 'bold',
+              '&:hover': { textDecoration: 'underline' },
+            }}
           >
             OnBoard
           </Typography>
