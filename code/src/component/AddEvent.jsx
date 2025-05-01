@@ -67,6 +67,9 @@ export default function AddEvent() {
     if (!value || (Array.isArray(value) && value.length === 0)) {
       return "This field is required";
     }
+    if (name === "eventDate" && new Date(value) < new Date().setHours(0, 0, 0, 0)) {
+      return "Event date cannot be in the past";
+    }
     return "";
   };
 
@@ -138,9 +141,12 @@ export default function AddEvent() {
         mx: "auto",
         p: 4,
         gap: 2,
+        boxShadow: 3,
+        backgroundColor: "#f9f9f9",
+        borderRadius: 2
       }}
     >
-      <Typography variant="h5" align="center" mb={2}>
+      <Typography variant="h5" align="center" mb={2} fontWeight="bold">
         {editingEvent ? "Edit Event" : "Add New Event"}
       </Typography>
 
@@ -172,9 +178,7 @@ export default function AddEvent() {
         onChange={handleChange}
         error={!!error.eventDate}
         helperText={error.eventDate}
-        InputLabelProps={{
-          shrink: true,
-        }}
+        InputLabelProps={{ shrink: true }}
       />
 
       <FormControl fullWidth>
@@ -256,12 +260,15 @@ export default function AddEvent() {
         </FormControl>
       )}
 
-      <Button variant="contained" type="submit">
+      <Button
+        variant="contained"
+        type="submit"
+        sx={{ backgroundColor: '#66bb6a', '&:hover': { backgroundColor: '#4caf50' } }}
+      >
         {editingEvent ? "Update Event" : "Save Event"}
       </Button>
-      <Button variant="outlined" onClick={() => navigate("/events")}>
-        Cancel
-      </Button>
+
+      <Button variant="outlined" onClick={() => navigate("/events")}>Cancel</Button>
     </Box>
   );
 }

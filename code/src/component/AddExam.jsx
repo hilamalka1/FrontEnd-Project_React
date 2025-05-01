@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  MenuItem
+  Box, TextField, Button, Typography, MenuItem
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -20,14 +16,11 @@ export default function AddExam() {
     examDate: "",
     courseCode: "",
   });
-
   const [error, setError] = useState({});
 
   useEffect(() => {
     const savedCourses = localStorage.getItem("courses");
-    if (savedCourses) {
-      setCourses(JSON.parse(savedCourses));
-    }
+    if (savedCourses) setCourses(JSON.parse(savedCourses));
 
     if (editingExam) {
       setFormData({
@@ -40,12 +33,8 @@ export default function AddExam() {
   }, [editingExam]);
 
   const validateField = (name, value) => {
-    let msg = "";
     const trimmed = typeof value === "string" ? value.trim() : value;
-    if (!trimmed) {
-      msg = "This field is required";
-    }
-    return msg;
+    return !trimmed ? "This field is required" : "";
   };
 
   const handleChange = (e) => {
@@ -57,38 +46,21 @@ export default function AddExam() {
 
   const handleSave = (e) => {
     e.preventDefault();
-
     const newErrors = {};
     Object.keys(formData).forEach((key) => {
       newErrors[key] = validateField(key, formData[key]);
     });
-
     setError(newErrors);
-
-    const hasError = Object.values(newErrors).some(Boolean);
-    if (hasError) {
+    if (Object.values(newErrors).some(Boolean)) {
       alert("Please fill in all fields correctly");
       return;
     }
 
     const saved = localStorage.getItem('exams');
     const examsArray = saved ? JSON.parse(saved) : [];
-
-    let updated;
-    if (editingExam) {
-      updated = examsArray.map(e =>
-        e.id === editingExam.id
-          ? { ...e, ...formData }
-          : e
-      );
-    } else {
-      const newExam = {
-        ...formData,
-        id: Date.now(),
-        submittedStudents: []
-      };
-      updated = [...examsArray, newExam];
-    }
+    const updated = editingExam
+      ? examsArray.map(e => e.id === editingExam.id ? { ...e, ...formData } : e)
+      : [...examsArray, { ...formData, id: Date.now(), submittedStudents: [] }];
 
     localStorage.setItem("exams", JSON.stringify(updated));
     alert("Exam saved successfully!");
@@ -104,11 +76,15 @@ export default function AddExam() {
         flexDirection: "column",
         maxWidth: 500,
         mx: "auto",
+        my: 4,
         p: 4,
         gap: 2,
+        boxShadow: 3,
+        borderRadius: 2,
+        backgroundColor: "#f5f5f5",
       }}
     >
-      <Typography variant="h5" align="center">
+      <Typography variant="h5" align="center" fontWeight="bold">
         {editingExam ? "Edit Exam" : "Add New Exam"}
       </Typography>
 
@@ -140,9 +116,8 @@ export default function AddExam() {
         onChange={handleChange}
         error={!!error.examDate}
         helperText={error.examDate}
-        InputLabelProps={{
-          shrink: true,
-        }}
+        InputLabelProps={{ shrink: true }}
+        inputProps={{ min: new Date().toISOString().split("T")[0] }}
       />
 
       <TextField
@@ -154,21 +129,24 @@ export default function AddExam() {
         error={!!error.courseCode}
         helperText={error.courseCode}
       >
-        {courses.length > 0 ? courses.map((course, index) => (
-          <MenuItem key={index} value={course.courseCode}>
-            {course.courseName} ({course.courseCode})
+        {courses.length > 0 ? courses.map((c, i) => (
+          <MenuItem key={i} value={c.courseCode}>
+            {c.courseName} ({c.courseCode})
           </MenuItem>
         )) : (
           <MenuItem disabled>No courses available</MenuItem>
         )}
       </TextField>
 
-      <Button variant="contained" type="submit">
+      <Button
+        variant="contained"
+        type="submit"
+        sx={{ backgroundColor: "#66bb6a", '&:hover': { backgroundColor: "#4caf50" } }}
+      >
         {editingExam ? "Update Exam" : "Save Exam"}
       </Button>
-      <Button variant="outlined" onClick={() => navigate("/exams")}>
-        Cancel
-      </Button>
+
+      <Button variant="outlined" onClick={() => navigate("/exams")}>Cancel</Button>
     </Box>
   );
 }
