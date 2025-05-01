@@ -10,12 +10,12 @@ import { Link } from 'react-router-dom';
 
 export default function Header() {
   const navLinks = [
-    { label: 'Home Page1', path: '/' },
+    { label: 'Home Page', path: '/' },
     { label: 'Students', path: '/students' },
     { label: 'Courses', path: '/courses' },
     { label: 'Assignments', path: '/assignments' },
     { label: 'Exams', path: '/exams' },
-    { label: 'Events', path: '/events' },
+    { label: 'Events/Messaeges', path: '/events' },
     { label: 'Info', path: '/info' },        // ✅ קישור לעמוד מידע
     { label: 'Support', path: '/support' }    // ✅ קישור לעמוד תמיכה
   ];
