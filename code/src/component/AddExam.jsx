@@ -82,6 +82,7 @@ export default function AddExam() {
         boxShadow: 3,
         borderRadius: 2,
         backgroundColor: "#f5f5f5",
+        width: "90%"
       }}
     >
       <Typography variant="h5" align="center" fontWeight="bold">
@@ -95,6 +96,7 @@ export default function AddExam() {
         onChange={handleChange}
         error={!!error.examName}
         helperText={error.examName}
+        fullWidth
       />
 
       <TextField
@@ -106,6 +108,7 @@ export default function AddExam() {
         helperText={error.description}
         multiline
         rows={3}
+        fullWidth
       />
 
       <TextField
@@ -118,6 +121,7 @@ export default function AddExam() {
         helperText={error.examDate}
         InputLabelProps={{ shrink: true }}
         inputProps={{ min: new Date().toISOString().split("T")[0] }}
+        fullWidth
       />
 
       <TextField
@@ -128,6 +132,7 @@ export default function AddExam() {
         onChange={handleChange}
         error={!!error.courseCode}
         helperText={error.courseCode}
+        fullWidth
       >
         {courses.length > 0 ? courses.map((c, i) => (
           <MenuItem key={i} value={c.courseCode}>
@@ -141,12 +146,18 @@ export default function AddExam() {
       <Button
         variant="contained"
         type="submit"
-        sx={{ backgroundColor: "#66bb6a", '&:hover': { backgroundColor: "#4caf50" } }}
+        sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
       >
         {editingExam ? "Update Exam" : "Save Exam"}
       </Button>
 
-      <Button variant="outlined" onClick={() => navigate("/exams")}>Cancel</Button>
+      <Button
+        variant="outlined"
+        onClick={() => navigate("/exams")}
+        sx={{ borderColor: "#81c784", color: "#388e3c" }}
+      >
+        Cancel
+      </Button>
     </Box>
   );
 }

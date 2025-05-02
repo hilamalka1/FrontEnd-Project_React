@@ -15,7 +15,14 @@ import {
   Divider,
   Button
 } from "@mui/material";
-import { Person, Email, School, Assignment, CalendarToday, Event } from "@mui/icons-material";
+import {
+  Person,
+  Email,
+  School,
+  Assignment,
+  CalendarToday,
+  Event
+} from "@mui/icons-material";
 
 export default function Home() {
   const [students, setStudents] = useState([]);
@@ -39,38 +46,42 @@ export default function Home() {
     setSelectedStudent(student || null);
   }, [selectedStudentId, students]);
 
-  const getStudentCourses = () => {
-    return courses.filter((c) =>
+  const getStudentCourses = () =>
+    courses.filter((c) =>
       c.enrolledStudents?.some((s) => s.studentId === selectedStudentId)
     );
-  };
 
-  const getStudentAssignments = () => {
-    return assignments.filter((a) => a.courseCode && getStudentCourses().some(c => c.courseCode === a.courseCode));
-  };
+  const getStudentAssignments = () =>
+    assignments.filter((a) =>
+      getStudentCourses().some((c) => c.courseCode === a.courseCode)
+    );
 
-  const getStudentExams = () => {
-    return exams.filter((e) => e.courseCode && getStudentCourses().some(c => c.courseCode === e.courseCode));
-  };
+  const getStudentExams = () =>
+    exams.filter((e) =>
+      getStudentCourses().some((c) => c.courseCode === e.courseCode)
+    );
 
-  const getStudentEvents = () => {
-    return events.filter((ev) => {
+  const getStudentEvents = () =>
+    events.filter((ev) => {
       if (ev.audienceType === "all") return true;
-      if (ev.audienceType === "degree") return selectedStudent?.degreeProgram === ev.audienceValue;
-      if (ev.audienceType === "course") return getStudentCourses().some(c => c.courseCode === ev.audienceValue);
-      if (ev.audienceType === "students") return ev.audienceValue.includes(selectedStudentId);
+      if (ev.audienceType === "degree")
+        return selectedStudent?.degreeProgram === ev.audienceValue;
+      if (ev.audienceType === "course")
+        return getStudentCourses().some((c) => c.courseCode === ev.audienceValue);
+      if (ev.audienceType === "students")
+        return ev.audienceValue.includes(selectedStudentId);
       return false;
     });
-  };
 
   return (
-    <Box p={4}>
-      <FormControl fullWidth sx={{ mb: 4 }}>
+    <Box p={2} sx={{ bgcolor: "#f9fff9", minHeight: "100vh" }}>
+      <FormControl fullWidth sx={{ mb: 3 }}>
         <InputLabel>Select Student</InputLabel>
         <Select
           value={selectedStudentId}
           label="Select Student"
           onChange={(e) => setSelectedStudentId(e.target.value)}
+          sx={{ bgcolor: "#e8f5e9" }}
         >
           {students.map((student) => (
             <MenuItem key={student.studentId} value={student.studentId}>
@@ -82,9 +93,12 @@ export default function Home() {
 
       {selectedStudent && (
         <>
-          <Card sx={{ mb: 4 }}>
+          <Card sx={{ mb: 3, bgcolor: "#e8f5e9" }}>
             <CardContent>
-              <Typography variant="h5" mb={2}>Student Profile</Typography>
+              <Typography variant="h5" fontWeight="bold" gutterBottom>
+                Student Profile
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
               <List>
                 <ListItem>
                   <ListItemIcon><Person /></ListItemIcon>
@@ -110,17 +124,26 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card sx={{ mb: 4 }}>
+          <Card sx={{ mb: 3, bgcolor: "#e8f5e9" }}>
             <CardContent>
-              <Typography variant="h5" mb={2}>Current Semester Courses</Typography>
+              <Typography variant="h5" fontWeight="bold" gutterBottom>
+                Current Semester Courses
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
               <List>
                 {getStudentCourses().map((c) => (
-                  <ListItem key={c.courseCode} sx={{ justifyContent: 'space-between' }}>
+                  <ListItem key={c.courseCode} sx={{ justifyContent: "space-between", flexWrap: "wrap" }}>
                     <Box>
                       <Typography fontWeight="bold">{c.courseName}</Typography>
-                      <Typography variant="body2" color="textSecondary">{c.lecturerName}</Typography>
+                      <Typography variant="body2" color="text.secondary">{c.lecturerName}</Typography>
                     </Box>
-                    <Button variant="outlined" size="small" startIcon={<Email />} onClick={() => window.location.href = `mailto:${c.lecturerEmail}`}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Email />}
+                      onClick={() => window.location.href = `mailto:${c.lecturerEmail}`}
+                      sx={{ mt: { xs: 1, sm: 0 } }}
+                    >
                       Contact Lecturer
                     </Button>
                   </ListItem>
@@ -129,10 +152,13 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Box display="flex" flexWrap="wrap" gap={2}>
-            <Card sx={{ flex: 1 }}>
+          <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={2}>
+            <Card sx={{ flex: 1, bgcolor: "#e8f5e9" }}>
               <CardContent>
-                <Typography variant="h6" mb={2}>Upcoming Events</Typography>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Upcoming Events
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
                 <List>
                   {getStudentEvents().map((ev) => (
                     <ListItem key={ev.id}>
@@ -144,9 +170,12 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card sx={{ flex: 1 }}>
+            <Card sx={{ flex: 1, bgcolor: "#e8f5e9" }}>
               <CardContent>
-                <Typography variant="h6" mb={2}>Upcoming Assignments & Exams</Typography>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Assignments & Exams
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
                 <List>
                   {getStudentAssignments().map((a) => (
                     <ListItem key={a.id}>

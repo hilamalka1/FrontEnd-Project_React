@@ -26,29 +26,28 @@ export default function AssignmentList() {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" align="center" mb={3} fontWeight="bold">Assignment Management</Typography>
+      <Typography variant="h4" align="center" mb={3} fontWeight="bold">
+        Assignment Management
+      </Typography>
 
       <Box display="flex" justifyContent="center" mb={3}>
-        <Link to="/add-assignment">
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            sx={{ backgroundColor: "#66bb6a", '&:hover': { backgroundColor: "#4caf50" } }}
-          >
-            Add New Assignment
-          </Button>
-        </Link>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
+          onClick={() => navigate("/add-assignment")}
+        >
+          Add New Assignment
+        </Button>
       </Box>
 
       <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
         <Table>
           <TableHead sx={{ backgroundColor: "#e8f5e9" }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bold" }}>Assignment Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Description</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Due Date</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Course Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
+              {["Assignment Name", "Description", "Due Date", "Course Code", "Actions"].map((col) => (
+                <TableCell key={col} sx={{ fontWeight: "bold" }}>{col}</TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -59,8 +58,12 @@ export default function AssignmentList() {
                 <TableCell>{a.dueDate}</TableCell>
                 <TableCell>{a.courseCode}</TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleEdit(a)} title="Edit"><Edit /></IconButton>
-                  <IconButton onClick={() => handleDelete(a.id)} color="error" title="Delete"><Delete /></IconButton>
+                  <IconButton onClick={() => handleEdit(a)} title="Edit" sx={{ color: "#388e3c" }}>
+                    <Edit />
+                  </IconButton>
+                  <IconButton onClick={() => handleDelete(a.id)} color="error" title="Delete">
+                    <Delete />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             )) : (

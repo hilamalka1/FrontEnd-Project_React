@@ -1,31 +1,9 @@
-// גרסה מתוקנת של CourseList.jsx - כוללת תצוגה של סטודנטים רשומים + סימון אוטומטי
 import React, { useEffect, useState } from "react";
 import {
-  Box,
-  Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
-  OutlinedInput,
-  Checkbox,
-  ListItemText,
-  Chip,
-  Stack,
-  Divider
+  Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, IconButton, Dialog, DialogTitle, DialogContent,
+  DialogActions, MenuItem, Select, InputLabel, FormControl, OutlinedInput,
+  Checkbox, ListItemText, Chip, Stack, Divider
 } from "@mui/material";
 import { Add, PersonAdd, Edit, Delete, Close } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -36,13 +14,11 @@ export default function CourseList() {
   const [selectedDegree, setSelectedDegree] = useState("");
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [selectedCourseIndex, setSelectedCourseIndex] = useState(null);
-
   const navigate = useNavigate();
 
   useEffect(() => {
     const savedCourses = localStorage.getItem("courses");
     const savedStudents = localStorage.getItem("students");
-
     if (savedCourses) setCourses(JSON.parse(savedCourses));
     if (savedStudents) setStudents(JSON.parse(savedStudents));
   }, []);
@@ -56,7 +32,6 @@ export default function CourseList() {
       selectedStudents.forEach((studentId) => {
         const student = students.find((s) => s.studentId === studentId);
         const alreadyEnrolled = course.enrolledStudents.find((s) => s.studentId === studentId);
-
         if (student && !alreadyEnrolled) {
           course.enrolledStudents.push(student);
         }
@@ -74,9 +49,7 @@ export default function CourseList() {
   };
 
   const handleDeleteCourse = (index) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this course?");
-    if (!confirmDelete) return;
-
+    if (!window.confirm("Are you sure you want to delete this course?")) return;
     const updatedCourses = [...courses];
     updatedCourses.splice(index, 1);
     setCourses(updatedCourses);
@@ -84,21 +57,15 @@ export default function CourseList() {
   };
 
   const handleRemoveStudentFromCourse = (courseIndex, studentId) => {
-    const confirmRemove = window.confirm("Are you sure you want to remove this student?");
-    if (!confirmRemove) return;
-
+    if (!window.confirm("Remove this student?")) return;
     const updatedCourses = [...courses];
-    const course = updatedCourses[courseIndex];
-    course.enrolledStudents = course.enrolledStudents.filter((s) => s.studentId !== studentId);
-
+    updatedCourses[courseIndex].enrolledStudents =
+      updatedCourses[courseIndex].enrolledStudents.filter((s) => s.studentId !== studentId);
     setCourses(updatedCourses);
     localStorage.setItem("courses", JSON.stringify(updatedCourses));
   };
 
-  const filtered = courses.filter((course) =>
-    selectedDegree ? course.degreeProgram === selectedDegree : true
-  );
-
+  const filtered = courses.filter((c) => selectedDegree ? c.degreeProgram === selectedDegree : true);
   const selectedCourse = selectedCourseIndex !== null ? courses[selectedCourseIndex] : null;
   const alreadyEnrolledIds = selectedCourse?.enrolledStudents?.map(s => s.studentId) || [];
 
@@ -118,7 +85,7 @@ export default function CourseList() {
         <Button
           variant="contained"
           startIcon={<Add />}
-          sx={{ backgroundColor: "#66bb6a", '&:hover': { backgroundColor: "#4caf50" } }}
+          sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
           onClick={() => navigate("/add-course")}
         >
           Add New Course
@@ -143,18 +110,13 @@ export default function CourseList() {
         <Table>
           <TableHead sx={{ backgroundColor: "#e8f5e9" }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bold" }}>Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Credits</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Semester</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Lecturer</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Degree</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Students</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
+              {['Code', 'Name', 'Credits', 'Semester', 'Lecturer', 'Degree', 'Students', 'Actions'].map(h => (
+                <TableCell key={h} sx={{ fontWeight: "bold" }}>{h}</TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {filtered.map((course, index) => (
+            {filtered.length ? filtered.map((course, index) => (
               <TableRow key={course.courseCode || index} hover>
                 <TableCell>{course.courseCode}</TableCell>
                 <TableCell>{course.courseName}</TableCell>
@@ -171,13 +133,11 @@ export default function CourseList() {
                           label={`${s.firstName} ${s.lastName}`}
                           onDelete={() => handleRemoveStudentFromCourse(index, s.studentId)}
                           deleteIcon={<Close />}
-                          sx={{ mb: 1 }}
+                          sx={{ mb: 1, bgcolor: "#81c784" }}
                         />
                       ))}
                     </Stack>
-                  ) : (
-                    "-"
-                  )}
+                  ) : "-"}
                 </TableCell>
                 <TableCell>
                   <IconButton onClick={() => setSelectedCourseIndex(index)} title="Add Students">
@@ -191,9 +151,7 @@ export default function CourseList() {
                   </IconButton>
                 </TableCell>
               </TableRow>
-            ))}
-
-            {filtered.length === 0 && (
+            )) : (
               <TableRow>
                 <TableCell colSpan={8} align="center">
                   No courses found.
@@ -235,7 +193,7 @@ export default function CourseList() {
             >
               {students.map((s) => (
                 <MenuItem key={s.studentId} value={s.studentId}>
-                  <Checkbox checked={selectedStudents.indexOf(s.studentId) > -1} />
+                  <Checkbox checked={selectedStudents.includes(s.studentId)} />
                   <ListItemText primary={`${s.firstName} ${s.lastName}`} />
                 </MenuItem>
               ))}
@@ -247,7 +205,7 @@ export default function CourseList() {
           <Button
             onClick={handleAddStudentToCourse}
             variant="contained"
-            sx={{ backgroundColor: "#66bb6a", '&:hover': { backgroundColor: "#4caf50" } }}
+            sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
           >
             Add
           </Button>

@@ -93,7 +93,7 @@ export default function AddCourses() {
       }
 
       if (name === "lecturerName") {
-        const nameRegex = /^[A-Za-z\u0590-\u05FF\s]{2,}$/;
+        const nameRegex = /^[A-Za-z֐-׿\s]{2,}$/;
         if (!nameRegex.test(value.trim())) {
           msg = "Only Hebrew or English letters allowed (min 2 characters)";
         }
@@ -127,9 +127,6 @@ export default function AddCourses() {
     const newErrors = {};
     Object.keys(formData).forEach((key) => {
       const msg = validateField(key, formData[key]);
-      if (msg) {
-        console.warn(`Validation error on ${key}:`, msg);
-      }
       newErrors[key] = msg;
     });
 
@@ -170,29 +167,33 @@ export default function AddCourses() {
         display: "flex",
         flexDirection: "column",
         maxWidth: 500,
+        width: "90%",
         mx: "auto",
         p: 4,
         gap: 2,
+        bgcolor: "#f5f5f5",
+        borderRadius: 2,
+        boxShadow: 3
       }}
     >
-      <Typography variant="h5" align="center">
+      <Typography variant="h5" align="center" gutterBottom fontWeight="bold">
         {editingCourse ? "Edit Course" : "Add New Course"}
       </Typography>
 
-      <TextField label="Course Code" name="courseCode" value={formData.courseCode} InputProps={{ readOnly: true }} />
-      <TextField label="Course Name *" name="courseName" value={formData.courseName} onChange={handleChange} error={!!errors.courseName} helperText={errors.courseName} />
-      <TextField label="Credit Points *" name="creditPoints" type="number" value={formData.creditPoints} onChange={handleChange} error={!!errors.creditPoints} helperText={errors.creditPoints} />
+      <TextField label="Course Code" name="courseCode" value={formData.courseCode} InputProps={{ readOnly: true }} fullWidth />
+      <TextField label="Course Name *" name="courseName" value={formData.courseName} onChange={handleChange} error={!!errors.courseName} helperText={errors.courseName} fullWidth />
+      <TextField label="Credit Points *" name="creditPoints" type="number" value={formData.creditPoints} onChange={handleChange} error={!!errors.creditPoints} helperText={errors.creditPoints} fullWidth />
 
-      <TextField select label="Semester *" name="semester" value={formData.semester} onChange={handleChange} error={!!errors.semester} helperText={errors.semester}>
+      <TextField select label="Semester *" name="semester" value={formData.semester} onChange={handleChange} error={!!errors.semester} helperText={errors.semester} fullWidth>
         {semesterOptions.map((option) => (
           <MenuItem key={option} value={option}>{option}</MenuItem>
         ))}
       </TextField>
 
-      <TextField label="Lecturer Name *" name="lecturerName" value={formData.lecturerName} onChange={handleChange} error={!!errors.lecturerName} helperText={errors.lecturerName} />
-      <TextField label="Lecturer Email *" name="lecturerEmail" type="email" value={formData.lecturerEmail} onChange={handleChange} error={!!errors.lecturerEmail} helperText={errors.lecturerEmail} />
+      <TextField label="Lecturer Name *" name="lecturerName" value={formData.lecturerName} onChange={handleChange} error={!!errors.lecturerName} helperText={errors.lecturerName} fullWidth />
+      <TextField label="Lecturer Email *" name="lecturerEmail" type="email" value={formData.lecturerEmail} onChange={handleChange} error={!!errors.lecturerEmail} helperText={errors.lecturerEmail} fullWidth />
 
-      <TextField select label="Degree Program *" name="degreeProgram" value={formData.degreeProgram} onChange={handleChange} error={!!errors.degreeProgram} helperText={errors.degreeProgram}>
+      <TextField select label="Degree Program *" name="degreeProgram" value={formData.degreeProgram} onChange={handleChange} error={!!errors.degreeProgram} helperText={errors.degreeProgram} fullWidth>
         {degreePrograms.map((degree) => (
           <MenuItem key={degree} value={degree}>{degree}</MenuItem>
         ))}
@@ -232,8 +233,8 @@ export default function AddCourses() {
                   key={id}
                   label={`${s.firstName} ${s.lastName}`}
                   onDelete={() => setSelectedStudents(prev => prev.filter(pid => pid !== id))}
-                  deleteIcon={<Close />}
-                  sx={{ mb: 1 }}
+                  deleteIcon={<Close sx={{ color: '#66bb6a' }} />}
+                  sx={{ mb: 1, bgcolor: '#81c784' }}
                 />
               ) : null;
             })}
@@ -242,10 +243,10 @@ export default function AddCourses() {
         </Box>
       )}
 
-      <Button variant="contained" type="submit" sx={{ mt: 2 }}>Save</Button>
-      <Button variant="outlined" onClick={() => navigate("/courses")}>Cancel</Button>
+      <Button variant="contained" type="submit" sx={{ mt: 2, bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}>Save</Button>
+      <Button variant="outlined" onClick={() => navigate("/courses")} sx={{ borderColor: "#81c784", color: "#388e3c" }}>Cancel</Button>
 
-      <Dialog open={summaryOpen} onClose={handleCloseSummary}>
+      <Dialog open={summaryOpen} onClose={handleCloseSummary} fullWidth>
         <DialogTitle>Course Summary</DialogTitle>
         <DialogContent sx={{ mt: 1 }}>
           <Typography><strong>Course Code:</strong> {formData.courseCode}</Typography>
@@ -257,7 +258,7 @@ export default function AddCourses() {
           <Typography><strong>Degree Program:</strong> {formData.degreeProgram}</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseSummary} autoFocus>Close</Button>
+          <Button onClick={handleCloseSummary} autoFocus sx={{ color: "#388e3c" }}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

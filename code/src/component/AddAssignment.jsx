@@ -110,6 +110,7 @@ export default function AddAssignment() {
         boxShadow: 3,
         borderRadius: 2,
         backgroundColor: "#f5f5f5",
+        width: "90%"
       }}
     >
       <Typography variant="h5" align="center" fontWeight="bold">
@@ -123,6 +124,7 @@ export default function AddAssignment() {
         onChange={handleChange}
         error={!!error.assignmentName}
         helperText={error.assignmentName}
+        fullWidth
       />
 
       <TextField
@@ -134,6 +136,7 @@ export default function AddAssignment() {
         helperText={error.description}
         multiline
         rows={3}
+        fullWidth
       />
 
       <TextField
@@ -146,6 +149,7 @@ export default function AddAssignment() {
         helperText={error.dueDate}
         InputLabelProps={{ shrink: true }}
         inputProps={{ min: new Date().toISOString().split("T")[0] }}
+        fullWidth
       />
 
       <TextField
@@ -156,6 +160,7 @@ export default function AddAssignment() {
         onChange={handleChange}
         error={!!error.courseCode}
         helperText={error.courseCode}
+        fullWidth
       >
         {courses.length > 0 ? courses.map((course, index) => (
           <MenuItem key={index} value={course.courseCode}>
@@ -169,7 +174,7 @@ export default function AddAssignment() {
       <Button
         variant="contained"
         type="submit"
-        sx={{ backgroundColor: "#66bb6a", '&:hover': { backgroundColor: "#4caf50" } }}
+        sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
       >
         {editingAssignment ? "Update Assignment" : "Save Assignment"}
       </Button>
@@ -177,6 +182,7 @@ export default function AddAssignment() {
       <Button
         variant="outlined"
         onClick={() => navigate("/assignments")}
+        sx={{ borderColor: "#81c784", color: "#388e3c" }}
       >
         Cancel
       </Button>

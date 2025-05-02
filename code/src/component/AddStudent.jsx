@@ -50,7 +50,7 @@ export default function AddStudent() {
       msg = "This field is required";
     } else {
       if ((name === "firstName" || name === "lastName") &&
-        !/^[A-Za-z\u0590-\u05FF\s]{2,}$/.test(trimmed)) {
+        !/^[A-Za-z֐-׿\s]{2,}$/.test(trimmed)) {
         msg = "Only Hebrew or English letters allowed, min 2 characters";
       }
 
@@ -132,6 +132,7 @@ export default function AddStudent() {
         boxShadow: 3,
         borderRadius: 2,
         backgroundColor: "#f5f5f5",
+        width: "90%"
       }}
     >
       <Typography variant="h5" align="center">
@@ -145,6 +146,7 @@ export default function AddStudent() {
         onChange={handleChange}
         error={!!error.firstName}
         helperText={error.firstName}
+        fullWidth
       />
 
       <TextField
@@ -154,6 +156,7 @@ export default function AddStudent() {
         onChange={handleChange}
         error={!!error.lastName}
         helperText={error.lastName}
+        fullWidth
       />
 
       <TextField
@@ -164,6 +167,7 @@ export default function AddStudent() {
         error={!!error.studentId}
         helperText={error.studentId}
         disabled={!!editingStudent}
+        fullWidth
       />
 
       <TextField
@@ -173,6 +177,7 @@ export default function AddStudent() {
         onChange={handleChange}
         error={!!error.email}
         helperText={error.email}
+        fullWidth
       />
 
       <TextField
@@ -183,11 +188,10 @@ export default function AddStudent() {
         onChange={handleChange}
         error={!!error.academicYear}
         helperText={error.academicYear}
+        fullWidth
       >
         {academicYears.map((year) => (
-          <MenuItem key={year} value={year}>
-            {year}
-          </MenuItem>
+          <MenuItem key={year} value={year}>{year}</MenuItem>
         ))}
       </TextField>
 
@@ -199,21 +203,17 @@ export default function AddStudent() {
         onChange={handleChange}
         error={!!error.degreeProgram}
         helperText={error.degreeProgram}
+        fullWidth
       >
         {degreePrograms.map((program, index) => (
-          <MenuItem key={index} value={program}>
-            {program}
-          </MenuItem>
+          <MenuItem key={index} value={program}>{program}</MenuItem>
         ))}
       </TextField>
 
       <Button
         variant="contained"
         type="submit"
-        sx={{
-          backgroundColor: "#66bb6a",
-          '&:hover': { backgroundColor: "#4caf50" }
-        }}
+        sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
       >
         Save
       </Button>
@@ -221,6 +221,7 @@ export default function AddStudent() {
       <Button
         variant="outlined"
         onClick={() => navigate("/students")}
+        sx={{ borderColor: "#81c784", color: "#388e3c" }}
       >
         Exit
       </Button>

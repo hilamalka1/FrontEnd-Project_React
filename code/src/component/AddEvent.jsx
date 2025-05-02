@@ -13,6 +13,7 @@ import {
   OutlinedInput
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
+import { CheckCircle, Cancel } from "@mui/icons-material";
 
 export default function AddEvent() {
   const navigate = useNavigate();
@@ -138,15 +139,16 @@ export default function AddEvent() {
         display: "flex",
         flexDirection: "column",
         maxWidth: 500,
+        width: "90%",
         mx: "auto",
         p: 4,
         gap: 2,
         boxShadow: 3,
-        backgroundColor: "#f9f9f9",
+        backgroundColor: "#f5f5f5",
         borderRadius: 2
       }}
     >
-      <Typography variant="h5" align="center" mb={2} fontWeight="bold">
+      <Typography variant="h5" align="center" fontWeight="bold" gutterBottom>
         {editingEvent ? "Edit Event" : "Add New Event"}
       </Typography>
 
@@ -207,9 +209,7 @@ export default function AddEvent() {
           helperText={error.audienceValue}
         >
           {degreePrograms.map((deg, index) => (
-            <MenuItem key={index} value={deg}>
-              {deg}
-            </MenuItem>
+            <MenuItem key={index} value={deg}>{deg}</MenuItem>
           ))}
         </TextField>
       )}
@@ -249,7 +249,10 @@ export default function AddEvent() {
           >
             {students.map((s) => (
               <MenuItem key={s.studentId} value={s.studentId}>
-                <Checkbox checked={selectedStudents.indexOf(s.studentId) > -1} />
+                <Checkbox
+                  checked={selectedStudents.indexOf(s.studentId) > -1}
+                  sx={{ color: '#66bb6a', '&.Mui-checked': { color: '#388e3c' } }}
+                />
                 <ListItemText primary={`${s.firstName} ${s.lastName}`} />
               </MenuItem>
             ))}
@@ -263,12 +266,20 @@ export default function AddEvent() {
       <Button
         variant="contained"
         type="submit"
-        sx={{ backgroundColor: '#66bb6a', '&:hover': { backgroundColor: '#4caf50' } }}
+        startIcon={<CheckCircle sx={{ color: '#ffffff' }} />}
+        sx={{ bgcolor: '#81c784', '&:hover': { bgcolor: '#66bb6a' } }}
       >
         {editingEvent ? "Update Event" : "Save Event"}
       </Button>
 
-      <Button variant="outlined" onClick={() => navigate("/events")}>Cancel</Button>
+      <Button
+        variant="outlined"
+        onClick={() => navigate("/events")}
+        startIcon={<Cancel sx={{ color: '#388e3c' }} />}
+        sx={{ borderColor: '#81c784', color: '#388e3c' }}
+      >
+        Cancel
+      </Button>
     </Box>
   );
 }

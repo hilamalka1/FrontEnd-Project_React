@@ -7,6 +7,7 @@ import {
   Button
 } from '@mui/material';
 import { Link } from 'react-router-dom';
+import SchoolIcon from '@mui/icons-material/School'; 
 
 export default function Header() {
   const navLinks = [
@@ -22,25 +23,30 @@ export default function Header() {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar
-        position="static"
-        sx={{ bgcolor: 'success.main' }}  
-      >
+      <AppBar position="static" sx={{ bgcolor: 'success.main' }}>
         <Toolbar sx={{ direction: 'ltr', display: 'flex', gap: 2 }}>
-          <Typography
-            variant="h6"
+          <Box
             component={Link}
             to="/"
             sx={{
-              mr: 2,
+              display: 'flex',
+              alignItems: 'center',
               textDecoration: 'none',
               color: 'inherit',
-              fontWeight: 'bold',
-              '&:hover': { textDecoration: 'underline' },
+              mr: 2,
             }}
           >
-            OnBoard
-          </Typography>
+            <SchoolIcon sx={{ mr: 1 }} />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 'bold',
+                '&:hover': { textDecoration: 'underline' },
+              }}
+            >
+              OnBoard
+            </Typography>
+          </Box>
 
           {navLinks.map((item) => (
             <Button

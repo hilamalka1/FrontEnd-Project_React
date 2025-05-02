@@ -4,7 +4,7 @@ import {
   TableContainer, TableHead, TableRow, Paper, IconButton
 } from "@mui/material";
 import { Edit, Add, Delete } from "@mui/icons-material";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function ExamList() {
   const navigate = useNavigate();
@@ -26,29 +26,28 @@ export default function ExamList() {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" align="center" mb={3} fontWeight="bold">Exam Management</Typography>
+      <Typography variant="h4" align="center" mb={3} fontWeight="bold">
+        Exam Management
+      </Typography>
 
       <Box display="flex" justifyContent="center" mb={3}>
-        <Link to="/add-exam">
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            sx={{ backgroundColor: "#66bb6a", '&:hover': { backgroundColor: "#4caf50" } }}
-          >
-            Add New Exam
-          </Button>
-        </Link>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
+          onClick={() => navigate("/add-exam")}
+        >
+          Add New Exam
+        </Button>
       </Box>
 
       <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
         <Table>
           <TableHead sx={{ backgroundColor: "#e8f5e9" }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bold" }}>Exam Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Description</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Exam Date</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Course Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
+              {["Exam Name", "Description", "Exam Date", "Course Code", "Actions"].map((col) => (
+                <TableCell key={col} sx={{ fontWeight: "bold" }}>{col}</TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -59,7 +58,7 @@ export default function ExamList() {
                 <TableCell>{exam.examDate}</TableCell>
                 <TableCell>{exam.courseCode}</TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleEdit(exam)} title="Edit">
+                  <IconButton onClick={() => handleEdit(exam)} title="Edit" sx={{ color: "#388e3c" }}>
                     <Edit />
                   </IconButton>
                   <IconButton onClick={() => handleDelete(exam.id)} color="error" title="Delete">

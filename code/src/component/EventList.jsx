@@ -35,8 +35,13 @@ export default function EventList() {
           component={Link}
           to="/add-event"
           variant="contained"
-          startIcon={<Add />}
-          sx={{ backgroundColor: '#66bb6a', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#4caf50' } }}
+          startIcon={<Add sx={{ color: "#ffffff" }} />}
+          sx={{
+            backgroundColor: '#66bb6a',
+            color: 'white',
+            textTransform: 'none',
+            '&:hover': { backgroundColor: '#4caf50' }
+          }}
         >
           Add New Event / Message
         </Button>
@@ -77,10 +82,22 @@ export default function EventList() {
                     : "Specific Students"}
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleEdit(event)} title="Edit" aria-label="edit" size="large">
+                  <IconButton
+                    onClick={() => handleEdit(event)}
+                    title="Edit"
+                    aria-label="edit"
+                    size="large"
+                    sx={{ color: '#388e3c' }}
+                  >
                     <Edit />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(event.id)} color="error" title="Delete" aria-label="delete" size="large">
+                  <IconButton
+                    onClick={() => handleDelete(event.id)}
+                    title="Delete"
+                    aria-label="delete"
+                    size="large"
+                    sx={{ color: '#d32f2f' }}
+                  >
                     <Delete />
                   </IconButton>
                 </TableCell>

@@ -40,8 +40,7 @@ export default function StudentList() {
   };
 
   const handleDelete = (index) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this student?");
-    if (!confirmDelete) return;
+    if (!window.confirm("Are you sure you want to delete this student?")) return;
     const updated = [...students];
     updated.splice(index, 1);
     setStudents(updated);
@@ -65,10 +64,7 @@ export default function StudentList() {
         <Button
           variant="contained"
           startIcon={<Add />}
-          sx={{
-            backgroundColor: "#66bb6a",
-            '&:hover': { backgroundColor: "#4caf50" }
-          }}
+          sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
           onClick={() => navigate("/add-student")}
         >
           Add Student
@@ -78,21 +74,17 @@ export default function StudentList() {
           placeholder="Search by name, ID or email"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          sx={{ width: '300px' }}
+          sx={{ width: { xs: '100%', sm: '300px' } }}
         />
       </Box>
 
       <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
         <Table>
-          <TableHead sx={{ backgroundColor: "#e0f2f1" }}>
+          <TableHead sx={{ backgroundColor: "#e8f5e9" }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bold" }}>First Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Last Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Student ID</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Academic Year</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Degree Program</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
+              {["First Name", "Last Name", "Student ID", "Email", "Academic Year", "Degree Program", "Actions"].map((col) => (
+                <TableCell key={col} sx={{ fontWeight: "bold" }}>{col}</TableCell>
+              ))}
             </TableRow>
           </TableHead>
 
@@ -108,7 +100,7 @@ export default function StudentList() {
                 <TableCell>
                   <IconButton
                     onClick={() => handleEdit(student)}
-                    color="primary"
+                    sx={{ color: "#388e3c" }}
                     aria-label="edit"
                   >
                     <Edit />
