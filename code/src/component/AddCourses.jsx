@@ -1,51 +1,23 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Stack,
-  Chip,
-  Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  OutlinedInput,
-  Checkbox,
-  ListItemText
+  Box, TextField, Button, Typography, MenuItem, Dialog, DialogTitle,
+  DialogContent, DialogActions, Stack, Chip, Divider, FormControl,
+  InputLabel, Select, OutlinedInput, Checkbox, ListItemText
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Close } from "@mui/icons-material";
 
 const semesterOptions = ["Semester A", "Semester B", "Summer"];
 const degreePrograms = [
-  "Computer Science",
-  "Software Engineering",
-  "Business Administration",
-  "Biology",
-  "Psychology",
-  "Economics",
-  "Education",
-  "Architecture"
+  "Computer Science", "Software Engineering", "Business Administration",
+  "Biology", "Psychology", "Economics", "Education", "Architecture"
 ];
 
 export default function AddCourses() {
   const [formData, setFormData] = useState({
-    courseCode: "",
-    courseName: "",
-    creditPoints: "",
-    semester: "",
-    lecturerName: "",
-    lecturerEmail: "",
-    degreeProgram: "",
-    enrolledStudents: []
+    courseCode: "", courseName: "", creditPoints: "", semester: "",
+    lecturerName: "", lecturerEmail: "", degreeProgram: "", enrolledStudents: []
   });
-
   const [students, setStudents] = useState([]);
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [errors, setErrors] = useState({});
@@ -55,85 +27,42 @@ export default function AddCourses() {
   const editingCourse = location.state?.course || null;
 
   useEffect(() => {
-    const savedStudents = JSON.parse(localStorage.getItem("students") || "[]");
-    setStudents(savedStudents);
-
+    setStudents(JSON.parse(localStorage.getItem("students") || "[]"));
     if (editingCourse) {
       setFormData(editingCourse);
       setSelectedStudents(editingCourse.enrolledStudents?.map(s => s.studentId) || []);
     } else {
       const generateCode = () => "CRS-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-      const saved = JSON.parse(localStorage.getItem("courses") || "[]");
+      const existing = JSON.parse(localStorage.getItem("courses") || "[]");
       let newCode = generateCode();
-      while (saved.some(c => c.courseCode === newCode)) {
-        newCode = generateCode();
-      }
+      while (existing.some(c => c.courseCode === newCode)) newCode = generateCode();
       setFormData(prev => ({ ...prev, courseCode: newCode }));
     }
   }, [editingCourse]);
 
   const validateField = (name, value) => {
-    let msg = "";
-
-    if (!value || value.toString().trim() === "") {
-      msg = "This field is required";
-    } else {
-      if (name === "lecturerEmail") {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) {
-          msg = "Invalid email format";
-        }
-      }
-
-      if (name === "creditPoints") {
-        const num = parseInt(value);
-        if (isNaN(num) || num <= 0) {
-          msg = "Credit points must be greater than 0";
-        }
-      }
-
-      if (name === "lecturerName") {
-        const nameRegex = /^[A-Za-z֐-׿\s]{2,}$/;
-        if (!nameRegex.test(value.trim())) {
-          msg = "Only Hebrew or English letters allowed (min 2 characters)";
-        }
-      }
-
-      if (name === "semester" && !semesterOptions.includes(value)) {
-        msg = "Please select a valid semester";
-      }
-
-      if (name === "degreeProgram" && !degreePrograms.includes(value)) {
-        msg = "Please select a valid degree program";
-      }
-    }
-
-    if (name === "enrolledStudents" && Array.isArray(value)) {
-      return "";
-    }
-    return msg;
+    if (name === "enrolledStudents") return "";
+    if (!value || value.toString().trim() === "") return "This field is required";
+    if (name === "lecturerEmail" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email format";
+    if (name === "creditPoints" && (isNaN(value) || +value <= 0)) return "Credit points must be greater than 0";
+    if (name === "lecturerName" && !/^[A-Za-z֐-׿\s]{2,}$/.test(value.trim())) return "Only Hebrew or English letters allowed (min 2 characters)";
+    if (name === "semester" && !semesterOptions.includes(value)) return "Please select a valid semester";
+    if (name === "degreeProgram" && !degreePrograms.includes(value)) return "Please select a valid degree program";
+    return "";
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const msg = validateField(name, value);
     setFormData({ ...formData, [name]: value });
-    setErrors({ ...errors, [name]: msg });
+    setErrors({ ...errors, [name]: validateField(name, value) });
   };
 
   const handleSave = (e) => {
     e.preventDefault();
-
     const newErrors = {};
-    Object.keys(formData).forEach((key) => {
-      const msg = validateField(key, formData[key]);
-      newErrors[key] = msg;
-    });
-
+    Object.keys(formData).forEach((key) => newErrors[key] = validateField(key, formData[key]));
     setErrors(newErrors);
-
-    const hasError = Object.values(newErrors).some((msg) => msg);
-    if (hasError) {
+    if (Object.values(newErrors).some((msg) => msg)) {
       alert("Please fix all errors before saving.");
       return;
     }
@@ -141,14 +70,9 @@ export default function AddCourses() {
     const enrolled = students.filter(s => selectedStudents.includes(s.studentId));
     const courseToSave = { ...formData, enrolledStudents: enrolled };
     const savedCourses = JSON.parse(localStorage.getItem("courses") || "[]");
-    let updated;
-    if (editingCourse) {
-      updated = savedCourses.map((c) =>
-        c.courseCode === editingCourse.courseCode ? courseToSave : c
-      );
-    } else {
-      updated = [...savedCourses, courseToSave];
-    }
+    const updated = editingCourse
+      ? savedCourses.map((c) => c.courseCode === editingCourse.courseCode ? courseToSave : c)
+      : [...savedCourses, courseToSave];
 
     localStorage.setItem("courses", JSON.stringify(updated));
     setSummaryOpen(true);
@@ -160,22 +84,7 @@ export default function AddCourses() {
   };
 
   return (
-    <Box
-      component="form"
-      onSubmit={handleSave}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        maxWidth: 500,
-        width: "90%",
-        mx: "auto",
-        p: 4,
-        gap: 2,
-        bgcolor: "#f5f5f5",
-        borderRadius: 2,
-        boxShadow: 3
-      }}
-    >
+    <Box component="form" onSubmit={handleSave} sx={{ display: "flex", flexDirection: "column", maxWidth: 500, width: "90%", mx: "auto", p: 4, gap: 2, bgcolor: "#f5f5f5", borderRadius: 2, boxShadow: 3 }}>
       <Typography variant="h5" align="center" gutterBottom fontWeight="bold">
         {editingCourse ? "Edit Course" : "Add New Course"}
       </Typography>
@@ -185,18 +94,14 @@ export default function AddCourses() {
       <TextField label="Credit Points *" name="creditPoints" type="number" value={formData.creditPoints} onChange={handleChange} error={!!errors.creditPoints} helperText={errors.creditPoints} fullWidth />
 
       <TextField select label="Semester *" name="semester" value={formData.semester} onChange={handleChange} error={!!errors.semester} helperText={errors.semester} fullWidth>
-        {semesterOptions.map((option) => (
-          <MenuItem key={option} value={option}>{option}</MenuItem>
-        ))}
+        {semesterOptions.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
       </TextField>
 
       <TextField label="Lecturer Name *" name="lecturerName" value={formData.lecturerName} onChange={handleChange} error={!!errors.lecturerName} helperText={errors.lecturerName} fullWidth />
       <TextField label="Lecturer Email *" name="lecturerEmail" type="email" value={formData.lecturerEmail} onChange={handleChange} error={!!errors.lecturerEmail} helperText={errors.lecturerEmail} fullWidth />
 
       <TextField select label="Degree Program *" name="degreeProgram" value={formData.degreeProgram} onChange={handleChange} error={!!errors.degreeProgram} helperText={errors.degreeProgram} fullWidth>
-        {degreePrograms.map((degree) => (
-          <MenuItem key={degree} value={degree}>{degree}</MenuItem>
-        ))}
+        {degreePrograms.map((degree) => <MenuItem key={degree} value={degree}>{degree}</MenuItem>)}
       </TextField>
 
       <FormControl fullWidth>
@@ -206,16 +111,14 @@ export default function AddCourses() {
           value={selectedStudents}
           onChange={(e) => setSelectedStudents(e.target.value)}
           input={<OutlinedInput label="Select Students" />}
-          renderValue={(selected) =>
-            selected.map((id) => {
-              const s = students.find((stu) => stu.studentId === id);
-              return s ? `${s.firstName} ${s.lastName}` : id;
-            }).join(", ")
-          }
+          renderValue={(selected) => selected.map((id) => {
+            const s = students.find((stu) => stu.studentId === id);
+            return s ? `${s.firstName} ${s.lastName}` : id;
+          }).join(", ")}
         >
           {students.map((s) => (
             <MenuItem key={s.studentId} value={s.studentId}>
-              <Checkbox checked={selectedStudents.indexOf(s.studentId) > -1} />
+              <Checkbox checked={selectedStudents.includes(s.studentId)} />
               <ListItemText primary={`${s.firstName} ${s.lastName}`} />
             </MenuItem>
           ))}
@@ -228,15 +131,15 @@ export default function AddCourses() {
           <Stack direction="row" spacing={1} flexWrap="wrap" mt={1}>
             {selectedStudents.map((id) => {
               const s = students.find((stu) => stu.studentId === id);
-              return s ? (
+              return s && (
                 <Chip
                   key={id}
                   label={`${s.firstName} ${s.lastName}`}
-                  onDelete={() => setSelectedStudents(prev => prev.filter(pid => pid !== id))}
+                  onDelete={() => setSelectedStudents((prev) => prev.filter((pid) => pid !== id))}
                   deleteIcon={<Close sx={{ color: '#66bb6a' }} />}
                   sx={{ mb: 1, bgcolor: '#81c784' }}
                 />
-              ) : null;
+              );
             })}
           </Stack>
           <Divider sx={{ mt: 2 }} />
@@ -249,13 +152,9 @@ export default function AddCourses() {
       <Dialog open={summaryOpen} onClose={handleCloseSummary} fullWidth>
         <DialogTitle>Course Summary</DialogTitle>
         <DialogContent sx={{ mt: 1 }}>
-          <Typography><strong>Course Code:</strong> {formData.courseCode}</Typography>
-          <Typography><strong>Name:</strong> {formData.courseName}</Typography>
-          <Typography><strong>Credits:</strong> {formData.creditPoints}</Typography>
-          <Typography><strong>Semester:</strong> {formData.semester}</Typography>
-          <Typography><strong>Lecturer:</strong> {formData.lecturerName}</Typography>
-          <Typography><strong>Email:</strong> {formData.lecturerEmail}</Typography>
-          <Typography><strong>Degree Program:</strong> {formData.degreeProgram}</Typography>
+          {Object.entries({ ...formData, enrolledStudents: undefined }).map(([key, val]) => (
+            <Typography key={key}><strong>{key.replace(/([A-Z])/g, ' $1')}:</strong> {val}</Typography>
+          ))}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseSummary} autoFocus sx={{ color: "#388e3c" }}>Close</Button>

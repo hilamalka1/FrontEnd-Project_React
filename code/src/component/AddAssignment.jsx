@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  MenuItem
+  Box, TextField, Button, Typography, MenuItem
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -15,80 +11,35 @@ export default function AddAssignment() {
 
   const [courses, setCourses] = useState([]);
   const [formData, setFormData] = useState({
-    assignmentName: "",
-    description: "",
-    dueDate: "",
-    courseCode: "",
+    assignmentName: "", description: "", dueDate: "", courseCode: ""
   });
-
   const [error, setError] = useState({});
 
   useEffect(() => {
-    const savedCourses = localStorage.getItem("courses");
-    if (savedCourses) {
-      setCourses(JSON.parse(savedCourses));
-    }
-
-    if (editingAssignment) {
-      setFormData({
-        assignmentName: editingAssignment.assignmentName,
-        description: editingAssignment.description,
-        dueDate: editingAssignment.dueDate,
-        courseCode: editingAssignment.courseCode,
-      });
-    }
+    const savedCourses = JSON.parse(localStorage.getItem("courses") || "[]");
+    setCourses(savedCourses);
+    if (editingAssignment) setFormData({ ...editingAssignment });
   }, [editingAssignment]);
 
-  const validateField = (name, value) => {
-    let msg = "";
-    const trimmed = typeof value === "string" ? value.trim() : value;
-    if (!trimmed) {
-      msg = "This field is required";
-    }
-    return msg;
-  };
+  const validateField = (name, value) => (!value?.toString().trim() ? "This field is required" : "");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const msg = validateField(name, value);
-    setError((prev) => ({ ...prev, [name]: msg }));
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setError((prev) => ({ ...prev, [name]: validateField(name, value) }));
   };
 
   const handleSave = (e) => {
     e.preventDefault();
-
     const newErrors = {};
-    Object.keys(formData).forEach((key) => {
-      newErrors[key] = validateField(key, formData[key]);
-    });
-
+    Object.entries(formData).forEach(([k, v]) => newErrors[k] = validateField(k, v));
     setError(newErrors);
+    if (Object.values(newErrors).some(Boolean)) return alert("Please fill in all fields correctly");
 
-    const hasError = Object.values(newErrors).some(Boolean);
-    if (hasError) {
-      alert("Please fill in all fields correctly");
-      return;
-    }
-
-    const saved = localStorage.getItem('assignments');
-    const assignmentsArray = saved ? JSON.parse(saved) : [];
-
-    let updated;
-    if (editingAssignment) {
-      updated = assignmentsArray.map(a =>
-        a.id === editingAssignment.id
-          ? { ...a, ...formData }
-          : a
-      );
-    } else {
-      const newAssignment = {
-        ...formData,
-        id: Date.now(),
-        submittedStudents: []
-      };
-      updated = [...assignmentsArray, newAssignment];
-    }
+    const saved = JSON.parse(localStorage.getItem("assignments") || "[]");
+    const updated = editingAssignment
+      ? saved.map((a) => a.id === editingAssignment.id ? { ...a, ...formData } : a)
+      : [...saved, { ...formData, id: Date.now(), submittedStudents: [] }];
 
     localStorage.setItem("assignments", JSON.stringify(updated));
     alert("Assignment saved successfully!");
@@ -99,19 +50,7 @@ export default function AddAssignment() {
     <Box
       component="form"
       onSubmit={handleSave}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        maxWidth: 500,
-        mx: "auto",
-        my: 4,
-        p: 4,
-        gap: 2,
-        boxShadow: 3,
-        borderRadius: 2,
-        backgroundColor: "#f5f5f5",
-        width: "90%"
-      }}
+      sx={{ display: "flex", flexDirection: "column", maxWidth: 500, mx: "auto", my: 4, p: 4, gap: 2, boxShadow: 3, borderRadius: 2, bgcolor: "#f5f5f5", width: "90%" }}
     >
       <Typography variant="h5" align="center" fontWeight="bold">
         {editingAssignment ? "Edit Assignment" : "Add New Assignment"}
@@ -134,9 +73,7 @@ export default function AddAssignment() {
         onChange={handleChange}
         error={!!error.description}
         helperText={error.description}
-        multiline
-        rows={3}
-        fullWidth
+        multiline rows={3} fullWidth
       />
 
       <TextField
@@ -162,28 +99,19 @@ export default function AddAssignment() {
         helperText={error.courseCode}
         fullWidth
       >
-        {courses.length > 0 ? courses.map((course, index) => (
-          <MenuItem key={index} value={course.courseCode}>
+        {courses.length > 0 ? courses.map((course) => (
+          <MenuItem key={course.courseCode} value={course.courseCode}>
             {course.courseName} ({course.courseCode})
           </MenuItem>
-        )) : (
-          <MenuItem disabled>No courses available</MenuItem>
-        )}
+        )) : <MenuItem disabled>No courses available</MenuItem>}
       </TextField>
 
-      <Button
-        variant="contained"
-        type="submit"
-        sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
-      >
+      <Button variant="contained" type="submit" sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}>
         {editingAssignment ? "Update Assignment" : "Save Assignment"}
       </Button>
 
-      <Button
-        variant="outlined"
-        onClick={() => navigate("/assignments")}
-        sx={{ borderColor: "#81c784", color: "#388e3c" }}
-      >
+      <Button variant="outlined" onClick={() => navigate("/assignments")}
+        sx={{ borderColor: "#81c784", color: "#388e3c" }}>
         Cancel
       </Button>
     </Box>

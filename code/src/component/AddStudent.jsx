@@ -1,23 +1,12 @@
+// AddStudent.jsx - קובץ מקוצר, תואם לעיצוב ושאר העמודים
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  MenuItem
-} from "@mui/material";
+import { Box, TextField, Button, Typography, MenuItem } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const academicYears = ["1", "2", "3", "4"];
 const degreePrograms = [
-  "Computer Science",
-  "Software Engineering",
-  "Business Administration",
-  "Biology",
-  "Psychology",
-  "Economics",
-  "Education",
-  "Architecture"
+  "Computer Science", "Software Engineering", "Business Administration",
+  "Biology", "Psychology", "Economics", "Education", "Architecture"
 ];
 
 export default function AddStudent() {
@@ -26,91 +15,44 @@ export default function AddStudent() {
   const editingStudent = location.state?.student || null;
 
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    studentId: "",
-    email: "",
-    academicYear: "",
-    degreeProgram: "",
+    firstName: "", lastName: "", studentId: "",
+    email: "", academicYear: "", degreeProgram: ""
   });
-
   const [error, setError] = useState({});
 
   useEffect(() => {
-    if (editingStudent) {
-      setFormData(editingStudent);
-    }
+    if (editingStudent) setFormData(editingStudent);
   }, [editingStudent]);
 
   const validateField = (name, value) => {
-    let msg = "";
-    const trimmed = value.trim();
-
-    if (!trimmed) {
-      msg = "This field is required";
-    } else {
-      if ((name === "firstName" || name === "lastName") &&
-        !/^[A-Za-z֐-׿\s]{2,}$/.test(trimmed)) {
-        msg = "Only Hebrew or English letters allowed, min 2 characters";
-      }
-
-      if (name === "studentId") {
-        if (!/^\d*$/.test(trimmed)) {
-          msg = "Only digits are allowed in Student ID";
-        } else if (trimmed.length !== 9) {
-          msg = "Student ID must be exactly 9 digits";
-        }
-      }
-
-      if (name === "email" &&
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-        msg = "Invalid email format";
-      }
-    }
-
-    return msg;
+    const v = value.trim();
+    if (!v) return "This field is required";
+    if (["firstName", "lastName"].includes(name) && !/^[A-Za-z֐-׿\s]{2,}$/.test(v)) return "Only Hebrew or English letters allowed, min 2 characters";
+    if (name === "studentId" && (!/^\d{9}$/.test(v))) return "Student ID must be exactly 9 digits";
+    if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Invalid email format";
+    return "";
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const msg = validateField(name, value);
-    setError((prev) => ({ ...prev, [name]: msg }));
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setError((prev) => ({ ...prev, [name]: validateField(name, value) }));
   };
 
   const handleSave = (e) => {
     e.preventDefault();
-
     const newErrors = {};
-    Object.keys(formData).forEach((key) => {
-      newErrors[key] = validateField(key, formData[key]);
-    });
-
+    Object.entries(formData).forEach(([k, v]) => newErrors[k] = validateField(k, v));
     setError(newErrors);
+    if (Object.values(newErrors).some(Boolean)) return alert("Please fix all errors before submitting");
 
-    const hasError = Object.values(newErrors).some(Boolean);
-    if (hasError) {
-      alert("Please fix all errors before submitting");
-      return;
-    }
-
-    const saved = localStorage.getItem("students");
-    const studentsArray = saved ? JSON.parse(saved) : [];
-
-    const existingStudent = studentsArray.find(
-      (s) => s.studentId === formData.studentId
-    );
-
-    if (!editingStudent && existingStudent) {
-      alert("Student ID already exists. Please use a unique ID.");
-      return;
-    }
+    const saved = JSON.parse(localStorage.getItem("students") || "[]");
+    const exists = saved.find((s) => s.studentId === formData.studentId);
+    if (!editingStudent && exists) return alert("Student ID already exists. Use a unique ID.");
 
     const updated = editingStudent
-      ? studentsArray.map((s) =>
-          s.studentId === formData.studentId ? formData : s
-        )
-      : [...studentsArray, formData];
+      ? saved.map((s) => s.studentId === formData.studentId ? formData : s)
+      : [...saved, formData];
 
     localStorage.setItem("students", JSON.stringify(updated));
     alert("Student saved successfully!");
@@ -118,113 +60,26 @@ export default function AddStudent() {
   };
 
   return (
-    <Box
-      component="form"
-      onSubmit={handleSave}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        maxWidth: 500,
-        mx: "auto",
-        my: 4,
-        p: 4,
-        gap: 2,
-        boxShadow: 3,
-        borderRadius: 2,
-        backgroundColor: "#f5f5f5",
-        width: "90%"
-      }}
-    >
-      <Typography variant="h5" align="center">
+    <Box component="form" onSubmit={handleSave} sx={{ display: "flex", flexDirection: "column", maxWidth: 500, mx: "auto", my: 4, p: 4, gap: 2, boxShadow: 3, borderRadius: 2, bgcolor: "#f5f5f5", width: "90%" }}>
+      <Typography variant="h5" align="center" fontWeight="bold">
         {editingStudent ? "Edit Student" : "Add New Student"}
       </Typography>
 
-      <TextField
-        label="First Name *"
-        name="firstName"
-        value={formData.firstName}
-        onChange={handleChange}
-        error={!!error.firstName}
-        helperText={error.firstName}
-        fullWidth
-      />
+      <TextField label="First Name *" name="firstName" value={formData.firstName} onChange={handleChange} error={!!error.firstName} helperText={error.firstName} fullWidth />
+      <TextField label="Last Name *" name="lastName" value={formData.lastName} onChange={handleChange} error={!!error.lastName} helperText={error.lastName} fullWidth />
+      <TextField label="Student ID (9 digits) *" name="studentId" value={formData.studentId} onChange={handleChange} error={!!error.studentId} helperText={error.studentId} disabled={!!editingStudent} fullWidth />
+      <TextField label="Email *" name="email" value={formData.email} onChange={handleChange} error={!!error.email} helperText={error.email} fullWidth />
 
-      <TextField
-        label="Last Name *"
-        name="lastName"
-        value={formData.lastName}
-        onChange={handleChange}
-        error={!!error.lastName}
-        helperText={error.lastName}
-        fullWidth
-      />
-
-      <TextField
-        label="Student ID (9 digits) *"
-        name="studentId"
-        value={formData.studentId}
-        onChange={handleChange}
-        error={!!error.studentId}
-        helperText={error.studentId}
-        disabled={!!editingStudent}
-        fullWidth
-      />
-
-      <TextField
-        label="Email *"
-        name="email"
-        value={formData.email}
-        onChange={handleChange}
-        error={!!error.email}
-        helperText={error.email}
-        fullWidth
-      />
-
-      <TextField
-        select
-        label="Academic Year *"
-        name="academicYear"
-        value={formData.academicYear}
-        onChange={handleChange}
-        error={!!error.academicYear}
-        helperText={error.academicYear}
-        fullWidth
-      >
-        {academicYears.map((year) => (
-          <MenuItem key={year} value={year}>{year}</MenuItem>
-        ))}
+      <TextField select label="Academic Year *" name="academicYear" value={formData.academicYear} onChange={handleChange} error={!!error.academicYear} helperText={error.academicYear} fullWidth>
+        {academicYears.map((year) => <MenuItem key={year} value={year}>{year}</MenuItem>)}
       </TextField>
 
-      <TextField
-        select
-        label="Degree Program *"
-        name="degreeProgram"
-        value={formData.degreeProgram}
-        onChange={handleChange}
-        error={!!error.degreeProgram}
-        helperText={error.degreeProgram}
-        fullWidth
-      >
-        {degreePrograms.map((program, index) => (
-          <MenuItem key={index} value={program}>{program}</MenuItem>
-        ))}
+      <TextField select label="Degree Program *" name="degreeProgram" value={formData.degreeProgram} onChange={handleChange} error={!!error.degreeProgram} helperText={error.degreeProgram} fullWidth>
+        {degreePrograms.map((program) => <MenuItem key={program} value={program}>{program}</MenuItem>)}
       </TextField>
 
-      <Button
-        variant="contained"
-        type="submit"
-        sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
-      >
-        Save
-      </Button>
-
-      <Button
-        variant="outlined"
-        onClick={() => navigate("/students")}
-        sx={{ borderColor: "#81c784", color: "#388e3c" }}
-      >
-        Exit
-      </Button>
+      <Button type="submit" variant="contained" sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}>Save</Button>
+      <Button variant="outlined" onClick={() => navigate("/students")} sx={{ borderColor: "#81c784", color: "#388e3c" }}>Exit</Button>
     </Box>
   );
 }

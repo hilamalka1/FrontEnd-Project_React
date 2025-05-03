@@ -1,19 +1,10 @@
+// AddEvent.jsx - תואם לעיצוב שאר העמודים, ללא אייקונים בביטול/שמירה
 import React, { useState, useEffect } from "react";
 import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  Checkbox,
-  ListItemText,
-  OutlinedInput
+  Box, TextField, Button, Typography, MenuItem, FormControl,
+  InputLabel, Select, Checkbox, ListItemText, OutlinedInput
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
-import { CheckCircle, Cancel } from "@mui/icons-material";
 
 export default function AddEvent() {
   const navigate = useNavigate();
@@ -22,41 +13,26 @@ export default function AddEvent() {
 
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
-  const [formData, setFormData] = useState({
-    eventName: "",
-    description: "",
-    eventDate: "",
-    audienceType: "all",
-    audienceValue: "",
-  });
   const [selectedStudents, setSelectedStudents] = useState([]);
+  const [formData, setFormData] = useState({
+    eventName: "", description: "", eventDate: "",
+    audienceType: "all", audienceValue: ""
+  });
   const [error, setError] = useState({});
 
   const degreePrograms = [
-    "Computer Science",
-    "Software Engineering",
-    "Business Administration",
-    "Biology",
-    "Psychology",
-    "Economics",
-    "Education",
-    "Architecture"
+    "Computer Science", "Software Engineering", "Business Administration",
+    "Biology", "Psychology", "Economics", "Education", "Architecture"
   ];
 
   useEffect(() => {
-    const savedCourses = localStorage.getItem("courses");
-    const savedStudents = localStorage.getItem("students");
-
-    if (savedCourses) setCourses(JSON.parse(savedCourses));
-    if (savedStudents) setStudents(JSON.parse(savedStudents));
+    setCourses(JSON.parse(localStorage.getItem("courses") || "[]"));
+    setStudents(JSON.parse(localStorage.getItem("students") || "[]"));
 
     if (editingEvent) {
       setFormData({
-        eventName: editingEvent.eventName,
-        description: editingEvent.description,
-        eventDate: editingEvent.eventDate,
-        audienceType: editingEvent.audienceType,
-        audienceValue: editingEvent.audienceType === "students" ? [] : editingEvent.audienceValue,
+        ...editingEvent,
+        audienceValue: editingEvent.audienceType === "students" ? [] : editingEvent.audienceValue
       });
       if (editingEvent.audienceType === "students") {
         setSelectedStudents(editingEvent.audienceValue || []);
@@ -65,12 +41,8 @@ export default function AddEvent() {
   }, [editingEvent]);
 
   const validateField = (name, value) => {
-    if (!value || (Array.isArray(value) && value.length === 0)) {
-      return "This field is required";
-    }
-    if (name === "eventDate" && new Date(value) < new Date().setHours(0, 0, 0, 0)) {
-      return "Event date cannot be in the past";
-    }
+    if (!value || (Array.isArray(value) && value.length === 0)) return "This field is required";
+    if (name === "eventDate" && new Date(value) < new Date().setHours(0, 0, 0, 0)) return "Event date cannot be in the past";
     return "";
   };
 
@@ -82,12 +54,10 @@ export default function AddEvent() {
 
   const handleSave = (e) => {
     e.preventDefault();
-
     const newErrors = {};
+
     Object.keys(formData).forEach((key) => {
-      if (key !== "audienceValue") {
-        newErrors[key] = validateField(key, formData[key]);
-      }
+      if (key !== "audienceValue") newErrors[key] = validateField(key, formData[key]);
     });
 
     if (formData.audienceType === "degree" || formData.audienceType === "course") {
@@ -98,141 +68,46 @@ export default function AddEvent() {
     }
 
     setError(newErrors);
-
-    const hasError = Object.values(newErrors).some((val) => val);
-    if (hasError) {
-      alert("Please fix all errors before submitting");
-      return;
-    }
-
-    const saved = localStorage.getItem('events');
-    const eventsArray = saved ? JSON.parse(saved) : [];
+    if (Object.values(newErrors).some(Boolean)) return alert("Please fix all errors before submitting");
 
     const finalAudienceValue = formData.audienceType === "students" ? selectedStudents : formData.audienceValue;
-
-    let updated;
-    if (editingEvent) {
-      updated = eventsArray.map(ev =>
-        ev.id === editingEvent.id
-          ? { ...editingEvent, ...formData, audienceValue: finalAudienceValue }
-          : ev
-      );
-    } else {
-      const newEvent = {
-        ...formData,
-        id: Date.now(),
-        audienceValue: finalAudienceValue
-      };
-      updated = [...eventsArray, newEvent];
-    }
+    const saved = JSON.parse(localStorage.getItem("events") || "[]");
+    const updated = editingEvent
+      ? saved.map(ev => ev.id === editingEvent.id ? { ...editingEvent, ...formData, audienceValue: finalAudienceValue } : ev)
+      : [...saved, { ...formData, id: Date.now(), audienceValue: finalAudienceValue }];
 
     localStorage.setItem("events", JSON.stringify(updated));
     alert("Event saved successfully!");
     navigate("/events");
   };
 
-  return (
-    <Box
-      component="form"
-      onSubmit={handleSave}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        maxWidth: 500,
-        width: "90%",
-        mx: "auto",
-        p: 4,
-        gap: 2,
-        boxShadow: 3,
-        backgroundColor: "#f5f5f5",
-        borderRadius: 2
-      }}
-    >
-      <Typography variant="h5" align="center" fontWeight="bold" gutterBottom>
-        {editingEvent ? "Edit Event" : "Add New Event"}
-      </Typography>
-
-      <TextField
-        label="Event Name *"
-        name="eventName"
-        value={formData.eventName}
-        onChange={handleChange}
-        error={!!error.eventName}
-        helperText={error.eventName}
-      />
-
-      <TextField
-        label="Description *"
-        name="description"
-        value={formData.description}
-        onChange={handleChange}
-        error={!!error.description}
-        helperText={error.description}
-        multiline
-        rows={3}
-      />
-
-      <TextField
-        label="Event Date *"
-        name="eventDate"
-        type="date"
-        value={formData.eventDate}
-        onChange={handleChange}
-        error={!!error.eventDate}
-        helperText={error.eventDate}
-        InputLabelProps={{ shrink: true }}
-      />
-
-      <FormControl fullWidth>
-        <InputLabel>Audience *</InputLabel>
-        <Select
-          name="audienceType"
-          value={formData.audienceType}
-          onChange={handleChange}
-          input={<OutlinedInput label="Audience *" />}
+  const renderAudienceSelect = () => {
+    if (formData.audienceType === "degree") {
+      return (
+        <TextField select label="Select Degree *" name="audienceValue"
+          value={formData.audienceValue} onChange={handleChange}
+          error={!!error.audienceValue} helperText={error.audienceValue}
         >
-          <MenuItem value="all">All Students</MenuItem>
-          <MenuItem value="degree">Specific Degree</MenuItem>
-          <MenuItem value="course">Specific Course</MenuItem>
-          <MenuItem value="students">Specific Students</MenuItem>
-        </Select>
-      </FormControl>
-
-      {formData.audienceType === "degree" && (
-        <TextField
-          select
-          label="Select Degree *"
-          name="audienceValue"
-          value={formData.audienceValue}
-          onChange={handleChange}
-          error={!!error.audienceValue}
-          helperText={error.audienceValue}
-        >
-          {degreePrograms.map((deg, index) => (
-            <MenuItem key={index} value={deg}>{deg}</MenuItem>
-          ))}
+          {degreePrograms.map((deg) => <MenuItem key={deg} value={deg}>{deg}</MenuItem>)}
         </TextField>
-      )}
-
-      {formData.audienceType === "course" && (
-        <TextField
-          select
-          label="Select Course *"
-          name="audienceValue"
-          value={formData.audienceValue}
-          onChange={handleChange}
-          error={!!error.audienceValue}
-          helperText={error.audienceValue}
+      );
+    }
+    if (formData.audienceType === "course") {
+      return (
+        <TextField select label="Select Course *" name="audienceValue"
+          value={formData.audienceValue} onChange={handleChange}
+          error={!!error.audienceValue} helperText={error.audienceValue}
         >
-          {courses.map((c, index) => (
-            <MenuItem key={index} value={c.courseCode}>
+          {courses.map((c) => (
+            <MenuItem key={c.courseCode} value={c.courseCode}>
               {c.courseName} ({c.courseCode})
             </MenuItem>
           ))}
         </TextField>
-      )}
-
-      {formData.audienceType === "students" && (
+      );
+    }
+    if (formData.audienceType === "students") {
+      return (
         <FormControl fullWidth>
           <InputLabel>Select Students *</InputLabel>
           <Select
@@ -249,35 +124,46 @@ export default function AddEvent() {
           >
             {students.map((s) => (
               <MenuItem key={s.studentId} value={s.studentId}>
-                <Checkbox
-                  checked={selectedStudents.indexOf(s.studentId) > -1}
-                  sx={{ color: '#66bb6a', '&.Mui-checked': { color: '#388e3c' } }}
-                />
+                <Checkbox checked={selectedStudents.includes(s.studentId)} />
                 <ListItemText primary={`${s.firstName} ${s.lastName}`} />
               </MenuItem>
             ))}
           </Select>
-          {error.audienceValue && (
-            <Typography color="error" variant="caption">{error.audienceValue}</Typography>
-          )}
+          {error.audienceValue && <Typography color="error" variant="caption">{error.audienceValue}</Typography>}
         </FormControl>
-      )}
+      );
+    }
+    return null;
+  };
 
-      <Button
-        variant="contained"
-        type="submit"
-        startIcon={<CheckCircle sx={{ color: '#ffffff' }} />}
-        sx={{ bgcolor: '#81c784', '&:hover': { bgcolor: '#66bb6a' } }}
-      >
+  return (
+    <Box component="form" onSubmit={handleSave} sx={{ display: "flex", flexDirection: "column", maxWidth: 500, width: "90%", mx: "auto", p: 4, gap: 2, boxShadow: 3, bgcolor: "#f5f5f5", borderRadius: 2 }}>
+      <Typography variant="h5" align="center" fontWeight="bold" gutterBottom>
+        {editingEvent ? "Edit Event" : "Add New Event"}
+      </Typography>
+
+      <TextField label="Event Name *" name="eventName" value={formData.eventName} onChange={handleChange} error={!!error.eventName} helperText={error.eventName} fullWidth />
+      <TextField label="Description *" name="description" value={formData.description} onChange={handleChange} error={!!error.description} helperText={error.description} multiline rows={3} fullWidth />
+      <TextField label="Event Date *" name="eventDate" type="date" value={formData.eventDate} onChange={handleChange} error={!!error.eventDate} helperText={error.eventDate} InputLabelProps={{ shrink: true }} fullWidth />
+
+      <FormControl fullWidth>
+        <InputLabel>Audience *</InputLabel>
+        <Select name="audienceType" value={formData.audienceType} onChange={handleChange} input={<OutlinedInput label="Audience *" />}>
+          <MenuItem value="all">All Students</MenuItem>
+          <MenuItem value="degree">Specific Degree</MenuItem>
+          <MenuItem value="course">Specific Course</MenuItem>
+          <MenuItem value="students">Specific Students</MenuItem>
+        </Select>
+      </FormControl>
+
+      {renderAudienceSelect()}
+
+      <Button type="submit" variant="contained" sx={{ bgcolor: '#81c784', '&:hover': { bgcolor: '#66bb6a' } }}>
         {editingEvent ? "Update Event" : "Save Event"}
       </Button>
 
-      <Button
-        variant="outlined"
-        onClick={() => navigate("/events")}
-        startIcon={<Cancel sx={{ color: '#388e3c' }} />}
-        sx={{ borderColor: '#81c784', color: '#388e3c' }}
-      >
+      <Button variant="outlined" onClick={() => navigate("/events")}
+        sx={{ borderColor: '#81c784', color: '#388e3c' }}>
         Cancel
       </Button>
     </Box>
