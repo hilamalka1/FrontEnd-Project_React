@@ -1,7 +1,8 @@
-// AddStudent.jsx - קובץ מקוצר, תואם לעיצוב ושאר העמודים
+// src/component/AddStudent.jsx
 import React, { useState, useEffect } from "react";
 import { Box, TextField, Button, Typography, MenuItem } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
+import { addStudent } from "../firebase/Student";
 
 const academicYears = ["1", "2", "3", "4"];
 const degreePrograms = [
@@ -39,24 +40,25 @@ export default function AddStudent() {
     setError((prev) => ({ ...prev, [name]: validateField(name, value) }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     const newErrors = {};
     Object.entries(formData).forEach(([k, v]) => newErrors[k] = validateField(k, v));
     setError(newErrors);
     if (Object.values(newErrors).some(Boolean)) return alert("Please fix all errors before submitting");
 
-    const saved = JSON.parse(localStorage.getItem("students") || "[]");
-    const exists = saved.find((s) => s.studentId === formData.studentId);
-    if (!editingStudent && exists) return alert("Student ID already exists. Use a unique ID.");
-
-    const updated = editingStudent
-      ? saved.map((s) => s.studentId === formData.studentId ? formData : s)
-      : [...saved, formData];
-
-    localStorage.setItem("students", JSON.stringify(updated));
-    alert("Student saved successfully!");
-    navigate("/students");
+    try {
+      if (!editingStudent) {
+        await addStudent(formData);
+        alert("Student saved to Firebase successfully!");
+      } else {
+        alert("Edit mode is not connected to Firebase yet.");
+      }
+      navigate("/students");
+    } catch (err) {
+      console.error("Error saving student:", err);
+      alert("An error occurred while saving the student.");
+    }
   };
 
   return (
@@ -69,11 +71,9 @@ export default function AddStudent() {
       <TextField label="Last Name *" name="lastName" value={formData.lastName} onChange={handleChange} error={!!error.lastName} helperText={error.lastName} fullWidth />
       <TextField label="Student ID (9 digits) *" name="studentId" value={formData.studentId} onChange={handleChange} error={!!error.studentId} helperText={error.studentId} disabled={!!editingStudent} fullWidth />
       <TextField label="Email *" name="email" value={formData.email} onChange={handleChange} error={!!error.email} helperText={error.email} fullWidth />
-
       <TextField select label="Academic Year *" name="academicYear" value={formData.academicYear} onChange={handleChange} error={!!error.academicYear} helperText={error.academicYear} fullWidth>
         {academicYears.map((year) => <MenuItem key={year} value={year}>{year}</MenuItem>)}
       </TextField>
-
       <TextField select label="Degree Program *" name="degreeProgram" value={formData.degreeProgram} onChange={handleChange} error={!!error.degreeProgram} helperText={error.degreeProgram} fullWidth>
         {degreePrograms.map((program) => <MenuItem key={program} value={program}>{program}</MenuItem>)}
       </TextField>
