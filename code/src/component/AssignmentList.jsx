@@ -1,30 +1,51 @@
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Button, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, IconButton
+  TableContainer, TableHead, TableRow, Paper, IconButton, LinearProgress
 } from "@mui/material";
 import { Edit, Add, Delete } from "@mui/icons-material";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {
+  listAssignments,
+  deleteAssignment
+} from "../firebase/Assignments";
 
 export default function AssignmentList() {
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem("assignments");
-    if (saved) setAssignments(JSON.parse(saved));
+    listAssignments()
+      .then((data) => setAssignments(data))
+      .catch((err) => {
+        console.error("Error loading assignments:", err);
+        alert("Failed to load assignments");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleEdit = (assignment) => navigate("/add-assignment", { state: { assignment } });
-
-  const handleDelete = (id) => {
-    if (!window.confirm("Are you sure you want to delete this assignment?")) return;
-    const updated = assignments.filter(a => a.id !== id);
-    setAssignments(updated);
-    localStorage.setItem("assignments", JSON.stringify(updated));
+  const handleEdit = (assignment) => {
+    navigate("/add-assignment", { state: { assignment } });
   };
 
-  return (
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this assignment?")) return;
+    try {
+      await deleteAssignment(id);
+      setAssignments((prev) => prev.filter((a) => a.id !== id));
+      alert("Assignment deleted successfully!");
+    } catch (error) {
+      console.error("Failed to delete:", error);
+      alert("Error deleting assignment");
+    }
+  };
+
+  return loading ? (
+    <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      <LinearProgress sx={{ width: "80%" }} />
+    </Box>
+  ) : (
     <Box sx={{ p: 4 }}>
       <Typography variant="h4" align="center" mb={3} fontWeight="bold">
         Assignment Management
@@ -34,7 +55,7 @@ export default function AssignmentList() {
         <Button
           variant="contained"
           startIcon={<Add />}
-          sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
+          sx={{ bgcolor: "#81c784", "&:hover": { bgcolor: "#66bb6a" } }}
           onClick={() => navigate("/add-assignment")}
         >
           Add New Assignment
@@ -51,22 +72,24 @@ export default function AssignmentList() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {assignments.length > 0 ? assignments.map((a) => (
-              <TableRow key={a.id} hover>
-                <TableCell>{a.assignmentName}</TableCell>
-                <TableCell>{a.description}</TableCell>
-                <TableCell>{a.dueDate}</TableCell>
-                <TableCell>{a.courseCode}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleEdit(a)} title="Edit" sx={{ color: "#388e3c" }}>
-                    <Edit />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(a.id)} color="error" title="Delete">
-                    <Delete />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            )) : (
+            {assignments.length > 0 ? (
+              assignments.map((a) => (
+                <TableRow key={a.id} hover>
+                  <TableCell>{a.assignmentName}</TableCell>
+                  <TableCell>{a.description}</TableCell>
+                  <TableCell>{a.dueDate}</TableCell>
+                  <TableCell>{a.courseCode}</TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleEdit(a)} title="Edit" sx={{ color: "#388e3c" }}>
+                      <Edit />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(a.id)} color="error" title="Delete">
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
                 <TableCell colSpan={5} align="center">No assignments available.</TableCell>
               </TableRow>

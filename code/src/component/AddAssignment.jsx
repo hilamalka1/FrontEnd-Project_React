@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box, TextField, Button, Typography, MenuItem
+  Box,
+  TextField,
+  Button,
+  Typography,
+  MenuItem,
+  LinearProgress,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
+import {
+  addAssignment,
+  updateAssignment,
+} from "../firebase/Assignments";
 
 export default function AddAssignment() {
   const navigate = useNavigate();
@@ -11,17 +20,33 @@ export default function AddAssignment() {
 
   const [courses, setCourses] = useState([]);
   const [formData, setFormData] = useState({
-    assignmentName: "", description: "", dueDate: "", courseCode: ""
+    assignmentName: "",
+    description: "",
+    dueDate: "",
+    courseCode: "",
   });
   const [error, setError] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const savedCourses = JSON.parse(localStorage.getItem("courses") || "[]");
     setCourses(savedCourses);
-    if (editingAssignment) setFormData({ ...editingAssignment });
+
+    if (editingAssignment) {
+      console.log("Loaded for editing:", editingAssignment);
+      setFormData({
+        assignmentName: editingAssignment.assignmentName || "",
+        description: editingAssignment.description || "",
+        dueDate: editingAssignment.dueDate || "",
+        courseCode: editingAssignment.courseCode || "",
+        submittedStudents: editingAssignment.submittedStudents || [],
+        id: editingAssignment.id || undefined,
+      });
+    }
   }, [editingAssignment]);
 
-  const validateField = (name, value) => (!value?.toString().trim() ? "This field is required" : "");
+  const validateField = (name, value) =>
+    !value?.toString().trim() ? "This field is required" : "";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,28 +54,59 @@ export default function AddAssignment() {
     setError((prev) => ({ ...prev, [name]: validateField(name, value) }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
+    const requiredFields = ["assignmentName", "description", "dueDate", "courseCode"];
     const newErrors = {};
-    Object.entries(formData).forEach(([k, v]) => newErrors[k] = validateField(k, v));
+
+    requiredFields.forEach((field) => {
+      newErrors[field] = validateField(field, formData[field]);
+    });
+
     setError(newErrors);
-    if (Object.values(newErrors).some(Boolean)) return alert("Please fill in all fields correctly");
+    if (Object.values(newErrors).some(Boolean)) {
+      return alert("Please fill in all fields correctly");
+    }
 
-    const saved = JSON.parse(localStorage.getItem("assignments") || "[]");
-    const updated = editingAssignment
-      ? saved.map((a) => a.id === editingAssignment.id ? { ...a, ...formData } : a)
-      : [...saved, { ...formData, id: Date.now(), submittedStudents: [] }];
-
-    localStorage.setItem("assignments", JSON.stringify(updated));
-    alert("Assignment saved successfully!");
-    navigate("/assignments");
+    setLoading(true);
+    try {
+      if (editingAssignment) {
+        await updateAssignment(formData);
+        alert("Assignment updated successfully!");
+      } else {
+        await addAssignment({ ...formData, submittedStudents: [] });
+        alert("Assignment saved successfully!");
+      }
+      navigate("/assignments");
+    } catch (error) {
+      console.error("Error saving assignment:", error);
+      alert("Error saving assignment");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
+  return loading ? (
+    <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      <LinearProgress sx={{ width: "80%" }} />
+    </Box>
+  ) : (
     <Box
       component="form"
       onSubmit={handleSave}
-      sx={{ display: "flex", flexDirection: "column", maxWidth: 500, mx: "auto", my: 4, p: 4, gap: 2, boxShadow: 3, borderRadius: 2, bgcolor: "#f5f5f5", width: "90%" }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        maxWidth: 500,
+        mx: "auto",
+        my: 4,
+        p: 4,
+        gap: 2,
+        boxShadow: 3,
+        borderRadius: 2,
+        bgcolor: "#f5f5f5",
+        width: "90%",
+      }}
     >
       <Typography variant="h5" align="center" fontWeight="bold">
         {editingAssignment ? "Edit Assignment" : "Add New Assignment"}
@@ -73,7 +129,9 @@ export default function AddAssignment() {
         onChange={handleChange}
         error={!!error.description}
         helperText={error.description}
-        multiline rows={3} fullWidth
+        multiline
+        rows={3}
+        fullWidth
       />
 
       <TextField
@@ -99,19 +157,30 @@ export default function AddAssignment() {
         helperText={error.courseCode}
         fullWidth
       >
-        {courses.length > 0 ? courses.map((course) => (
-          <MenuItem key={course.courseCode} value={course.courseCode}>
-            {course.courseName} ({course.courseCode})
-          </MenuItem>
-        )) : <MenuItem disabled>No courses available</MenuItem>}
+        {courses.length > 0 ? (
+          courses.map((course) => (
+            <MenuItem key={course.courseCode} value={course.courseCode}>
+              {course.courseName} ({course.courseCode})
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled>No courses available</MenuItem>
+        )}
       </TextField>
 
-      <Button variant="contained" type="submit" sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}>
+      <Button
+        variant="contained"
+        type="submit"
+        sx={{ bgcolor: "#81c784", "&:hover": { bgcolor: "#66bb6a" } }}
+      >
         {editingAssignment ? "Update Assignment" : "Save Assignment"}
       </Button>
 
-      <Button variant="outlined" onClick={() => navigate("/assignments")}
-        sx={{ borderColor: "#81c784", color: "#388e3c" }}>
+      <Button
+        variant="outlined"
+        onClick={() => navigate("/assignments")}
+        sx={{ borderColor: "#81c784", color: "#388e3c" }}
+      >
         Cancel
       </Button>
     </Box>
