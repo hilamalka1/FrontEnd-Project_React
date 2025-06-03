@@ -1,3 +1,4 @@
+// ExamList.jsx - גרסה מעודכנת עם שליפה ומחיקה מ-Firestore
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Button, Table, TableBody, TableCell,
@@ -5,23 +6,28 @@ import {
 } from "@mui/material";
 import { Edit, Add, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { getDocs, deleteDoc, doc, collection } from "firebase/firestore";
+import { firestore } from "../firebase/firebaseConfig";
 
 export default function ExamList() {
   const navigate = useNavigate();
   const [exams, setExams] = useState([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("exams");
-    if (saved) setExams(JSON.parse(saved));
+    const fetchExams = async () => {
+      const snap = await getDocs(collection(firestore, "exams"));
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setExams(data);
+    };
+    fetchExams();
   }, []);
 
   const handleEdit = (exam) => navigate("/add-exam", { state: { exam } });
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this exam?")) return;
-    const updated = exams.filter((e) => e.id !== id);
-    setExams(updated);
-    localStorage.setItem("exams", JSON.stringify(updated));
+    await deleteDoc(doc(firestore, "exams", id));
+    setExams((prev) => prev.filter((e) => e.id !== id));
   };
 
   return (
@@ -45,7 +51,10 @@ export default function ExamList() {
         <Table>
           <TableHead sx={{ backgroundColor: "#e8f5e9" }}>
             <TableRow>
-              {["Exam Name", "Description", "Exam Date", "Course Code", "Actions"].map((col) => (
+              {[
+                "Exam Name", "Description", "Exam Date",
+                "Course Code", "Actions"
+              ].map((col) => (
                 <TableCell key={col} sx={{ fontWeight: "bold" }}>{col}</TableCell>
               ))}
             </TableRow>

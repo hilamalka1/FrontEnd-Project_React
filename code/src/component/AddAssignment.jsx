@@ -12,6 +12,8 @@ import {
   addAssignment,
   updateAssignment,
 } from "../firebase/Assignments";
+import { collection, getDocs } from "firebase/firestore";
+import { firestore } from "../firebase/firebaseConfig";
 
 export default function AddAssignment() {
   const navigate = useNavigate();
@@ -20,7 +22,7 @@ export default function AddAssignment() {
 
   const [courses, setCourses] = useState([]);
   const [formData, setFormData] = useState({
-    assignmentName: "",
+    assignmentTitle: "",
     description: "",
     dueDate: "",
     courseCode: "",
@@ -29,13 +31,17 @@ export default function AddAssignment() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const savedCourses = JSON.parse(localStorage.getItem("courses") || "[]");
-    setCourses(savedCourses);
+    const fetchCourses = async () => {
+      const snapshot = await getDocs(collection(firestore, "courses"));
+      const courseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCourses(courseList);
+    };
+
+    fetchCourses();
 
     if (editingAssignment) {
-      console.log("Loaded for editing:", editingAssignment);
       setFormData({
-        assignmentName: editingAssignment.assignmentName || "",
+        assignmentTitle: editingAssignment.assignmentTitle || "",
         description: editingAssignment.description || "",
         dueDate: editingAssignment.dueDate || "",
         courseCode: editingAssignment.courseCode || "",
@@ -56,7 +62,7 @@ export default function AddAssignment() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    const requiredFields = ["assignmentName", "description", "dueDate", "courseCode"];
+    const requiredFields = ["assignmentTitle", "description", "dueDate", "courseCode"];
     const newErrors = {};
 
     requiredFields.forEach((field) => {
@@ -113,12 +119,12 @@ export default function AddAssignment() {
       </Typography>
 
       <TextField
-        label="Assignment Name *"
-        name="assignmentName"
-        value={formData.assignmentName}
+        label="Assignment Title *"
+        name="assignmentTitle"
+        value={formData.assignmentTitle}
         onChange={handleChange}
-        error={!!error.assignmentName}
-        helperText={error.assignmentName}
+        error={!!error.assignmentTitle}
+        helperText={error.assignmentTitle}
         fullWidth
       />
 

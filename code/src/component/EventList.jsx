@@ -1,3 +1,4 @@
+// EventList.jsx - גרסה מתקדמת עם Firestore ופורמט אמריקאי לשעות
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Button, Table, TableBody, TableCell,
@@ -5,24 +6,36 @@ import {
 } from "@mui/material";
 import { Edit, Add, Delete } from "@mui/icons-material";
 import { useNavigate, Link } from "react-router-dom";
+import { getDocs, deleteDoc, doc, collection } from "firebase/firestore";
+import { firestore } from "../firebase/firebaseConfig";
 
 export default function EventList() {
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("events");
-    if (saved) setEvents(JSON.parse(saved));
+    const fetchEvents = async () => {
+      const snap = await getDocs(collection(firestore, "events"));
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setEvents(data);
+    };
+    fetchEvents();
   }, []);
 
   const handleEdit = (event) => navigate("/add-event", { state: { event } });
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this event or message?")) return;
-    const updated = events.filter((e) => e.id !== id);
-    setEvents(updated);
-    localStorage.setItem("events", JSON.stringify(updated));
+    await deleteDoc(doc(firestore, "events", id));
+    setEvents((prev) => prev.filter((e) => e.id !== id));
   };
+
+  const formatTime = (timeStr) =>
+    new Date(`1970-01-01T${timeStr}:00`).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
 
   return (
     <Box sx={{ p: 4 }}>
@@ -69,17 +82,19 @@ export default function EventList() {
                 </TableCell>
                 <TableCell>{event.eventName}</TableCell>
                 <TableCell>{event.description}</TableCell>
-                <TableCell>{event.eventDate}</TableCell>
+                <TableCell>
+                  {event.eventDate} {event.startTime && event.endTime ? `(${formatTime(event.startTime)} - ${formatTime(event.endTime)})` : ""}
+                </TableCell>
                 <TableCell>
                   {event.audienceType === "all"
                     ? "All Students"
                     : event.audienceType === "degree"
-                    ? `Degree: ${event.audienceValue}`
-                    : event.audienceType === "course"
-                    ? `Course: ${event.audienceValue}`
-                    : Array.isArray(event.audienceValue)
-                    ? `Students: ${event.audienceValue.length}`
-                    : "Specific Students"}
+                      ? `Degree: ${event.audienceValue}`
+                      : event.audienceType === "course"
+                        ? `Course: ${event.audienceValue}`
+                        : Array.isArray(event.audienceValue)
+                          ? `Students: ${event.audienceValue.length}`
+                          : "Specific Students"}
                 </TableCell>
                 <TableCell>
                   <IconButton

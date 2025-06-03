@@ -1,3 +1,4 @@
+// StudentList.jsx - גרסה מתוקנת עם שליפה מ-Firestore
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -15,6 +16,8 @@ import {
 } from "@mui/material";
 import { Add, Edit, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { getDocs, collection, deleteDoc, doc } from "firebase/firestore";
+import { firestore } from "../firebase/firebaseConfig";
 
 export default function StudentList() {
   const [students, setStudents] = useState([]);
@@ -22,10 +25,16 @@ export default function StudentList() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedStudents = localStorage.getItem("students");
-    if (savedStudents) {
-      setStudents(JSON.parse(savedStudents));
-    }
+    const fetchStudents = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(firestore, "students"));
+        const data = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setStudents(data);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+      }
+    };
+    fetchStudents();
   }, []);
 
   const filtered = students.filter((s) =>
@@ -39,12 +48,14 @@ export default function StudentList() {
     navigate("/add-student", { state: { student } });
   };
 
-  const handleDelete = (index) => {
+  const handleDelete = async (studentId) => {
     if (!window.confirm("Are you sure you want to delete this student?")) return;
-    const updated = [...students];
-    updated.splice(index, 1);
-    setStudents(updated);
-    localStorage.setItem("students", JSON.stringify(updated));
+    try {
+      await deleteDoc(doc(firestore, "students", studentId));
+      setStudents((prev) => prev.filter((s) => s.id !== studentId));
+    } catch (error) {
+      console.error("Error deleting student:", error);
+    }
   };
 
   return (
@@ -89,8 +100,8 @@ export default function StudentList() {
           </TableHead>
 
           <TableBody>
-            {filtered.map((student, index) => (
-              <TableRow key={index} hover>
+            {filtered.map((student) => (
+              <TableRow key={student.id} hover>
                 <TableCell>{student.firstName}</TableCell>
                 <TableCell>{student.lastName}</TableCell>
                 <TableCell>{student.studentId}</TableCell>
@@ -106,7 +117,7 @@ export default function StudentList() {
                     <Edit />
                   </IconButton>
                   <IconButton
-                    onClick={() => handleDelete(index)}
+                    onClick={() => handleDelete(student.id)}
                     color="error"
                     aria-label="delete"
                   >

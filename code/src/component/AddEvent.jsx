@@ -1,10 +1,12 @@
-// AddEvent.jsx - תואם לעיצוב שאר העמודים, ללא אייקונים בביטול/שמירה
+// AddEvent.jsx - שומר ב-Firestore וכולל שדות 'משעה עד שעה'
 import React, { useState, useEffect } from "react";
 import {
   Box, TextField, Button, Typography, MenuItem, FormControl,
   InputLabel, Select, Checkbox, ListItemText, OutlinedInput
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
+import { addDoc, collection, updateDoc, doc, getDocs } from "firebase/firestore";
+import { firestore } from "../firebase/firebaseConfig";
 
 export default function AddEvent() {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ export default function AddEvent() {
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [formData, setFormData] = useState({
     eventName: "", description: "", eventDate: "",
+    startTime: "", endTime: "",
     audienceType: "all", audienceValue: ""
   });
   const [error, setError] = useState({});
@@ -26,14 +29,16 @@ export default function AddEvent() {
   ];
 
   useEffect(() => {
-    setCourses(JSON.parse(localStorage.getItem("courses") || "[]"));
-    setStudents(JSON.parse(localStorage.getItem("students") || "[]"));
+    const fetchData = async () => {
+      const courseSnap = await getDocs(collection(firestore, "courses"));
+      const studentSnap = await getDocs(collection(firestore, "students"));
+      setCourses(courseSnap.docs.map(doc => doc.data()));
+      setStudents(studentSnap.docs.map(doc => doc.data()));
+    };
+    fetchData();
 
     if (editingEvent) {
-      setFormData({
-        ...editingEvent,
-        audienceValue: editingEvent.audienceType === "students" ? [] : editingEvent.audienceValue
-      });
+      setFormData({ ...editingEvent });
       if (editingEvent.audienceType === "students") {
         setSelectedStudents(editingEvent.audienceValue || []);
       }
@@ -43,6 +48,7 @@ export default function AddEvent() {
   const validateField = (name, value) => {
     if (!value || (Array.isArray(value) && value.length === 0)) return "This field is required";
     if (name === "eventDate" && new Date(value) < new Date().setHours(0, 0, 0, 0)) return "Event date cannot be in the past";
+    if (name === "endTime" && formData.startTime && value < formData.startTime) return "End time cannot be before start time";
     return "";
   };
 
@@ -52,10 +58,9 @@ export default function AddEvent() {
     setError((prev) => ({ ...prev, [name]: validateField(name, value) }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     const newErrors = {};
-
     Object.keys(formData).forEach((key) => {
       if (key !== "audienceValue") newErrors[key] = validateField(key, formData[key]);
     });
@@ -68,17 +73,22 @@ export default function AddEvent() {
     }
 
     setError(newErrors);
-    if (Object.values(newErrors).some(Boolean)) return alert("Please fix all errors before submitting");
+    if (Object.values(newErrors).some(Boolean)) return;
 
     const finalAudienceValue = formData.audienceType === "students" ? selectedStudents : formData.audienceValue;
-    const saved = JSON.parse(localStorage.getItem("events") || "[]");
-    const updated = editingEvent
-      ? saved.map(ev => ev.id === editingEvent.id ? { ...editingEvent, ...formData, audienceValue: finalAudienceValue } : ev)
-      : [...saved, { ...formData, id: Date.now(), audienceValue: finalAudienceValue }];
+    const dataToSave = { ...formData, audienceValue: finalAudienceValue };
 
-    localStorage.setItem("events", JSON.stringify(updated));
-    alert("Event saved successfully!");
-    navigate("/events");
+    try {
+      if (editingEvent?.id) {
+        const ref = doc(firestore, "events", editingEvent.id);
+        await updateDoc(ref, dataToSave);
+      } else {
+        await addDoc(collection(firestore, "events"), dataToSave);
+      }
+      navigate("/events");
+    } catch (err) {
+      console.error("Error saving event:", err);
+    }
   };
 
   const renderAudienceSelect = () => {
@@ -86,8 +96,7 @@ export default function AddEvent() {
       return (
         <TextField select label="Select Degree *" name="audienceValue"
           value={formData.audienceValue} onChange={handleChange}
-          error={!!error.audienceValue} helperText={error.audienceValue}
-        >
+          error={!!error.audienceValue} helperText={error.audienceValue}>
           {degreePrograms.map((deg) => <MenuItem key={deg} value={deg}>{deg}</MenuItem>)}
         </TextField>
       );
@@ -96,8 +105,7 @@ export default function AddEvent() {
       return (
         <TextField select label="Select Course *" name="audienceValue"
           value={formData.audienceValue} onChange={handleChange}
-          error={!!error.audienceValue} helperText={error.audienceValue}
-        >
+          error={!!error.audienceValue} helperText={error.audienceValue}>
           {courses.map((c) => (
             <MenuItem key={c.courseCode} value={c.courseCode}>
               {c.courseName} ({c.courseCode})
@@ -145,6 +153,8 @@ export default function AddEvent() {
       <TextField label="Event Name *" name="eventName" value={formData.eventName} onChange={handleChange} error={!!error.eventName} helperText={error.eventName} fullWidth />
       <TextField label="Description *" name="description" value={formData.description} onChange={handleChange} error={!!error.description} helperText={error.description} multiline rows={3} fullWidth />
       <TextField label="Event Date *" name="eventDate" type="date" value={formData.eventDate} onChange={handleChange} error={!!error.eventDate} helperText={error.eventDate} InputLabelProps={{ shrink: true }} fullWidth />
+      <TextField label="Start Time *" name="startTime" type="time" value={formData.startTime} onChange={handleChange} error={!!error.startTime} helperText={error.startTime} InputLabelProps={{ shrink: true }} fullWidth />
+      <TextField label="End Time *" name="endTime" type="time" value={formData.endTime} onChange={handleChange} error={!!error.endTime} helperText={error.endTime} InputLabelProps={{ shrink: true }} fullWidth />
 
       <FormControl fullWidth>
         <InputLabel>Audience *</InputLabel>

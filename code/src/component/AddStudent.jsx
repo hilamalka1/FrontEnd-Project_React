@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { Box, TextField, Button, Typography, MenuItem } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
-import { addStudent } from "../firebase/Student";
+import { addStudent, updateStudent } from "../firebase/Student";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { firestore } from "../firebase/firebaseConfig";
 
 const academicYears = ["1", "2", "3", "4"];
 const degreePrograms = [
@@ -45,19 +47,23 @@ export default function AddStudent() {
     const newErrors = {};
     Object.entries(formData).forEach(([k, v]) => newErrors[k] = validateField(k, v));
     setError(newErrors);
-    if (Object.values(newErrors).some(Boolean)) return alert("Please fix all errors before submitting");
+    if (Object.values(newErrors).some(Boolean)) return;
 
     try {
       if (!editingStudent) {
+        const q = query(collection(firestore, "students"), where("studentId", "==", formData.studentId));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          setError((prev) => ({ ...prev, studentId: "Student ID already exists in the system" }));
+          return;
+        }
         await addStudent(formData);
-        alert("Student saved to Firebase successfully!");
       } else {
-        alert("Edit mode is not connected to Firebase yet.");
+        await updateStudent(editingStudent.id, formData);
       }
       navigate("/students");
     } catch (err) {
       console.error("Error saving student:", err);
-      alert("An error occurred while saving the student.");
     }
   };
 

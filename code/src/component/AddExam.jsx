@@ -1,8 +1,11 @@
+// AddExam.jsx - שומר מבחנים ב-Firestore ומושך קורסים משם
 import React, { useState, useEffect } from "react";
 import {
   Box, TextField, Button, Typography, MenuItem
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
+import { collection, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
+import { firestore } from "../firebase/firebaseConfig";
 
 export default function AddExam() {
   const navigate = useNavigate();
@@ -19,8 +22,11 @@ export default function AddExam() {
   const [error, setError] = useState({});
 
   useEffect(() => {
-    const savedCourses = localStorage.getItem("courses");
-    if (savedCourses) setCourses(JSON.parse(savedCourses));
+    const fetchCourses = async () => {
+      const courseSnap = await getDocs(collection(firestore, "courses"));
+      setCourses(courseSnap.docs.map(doc => doc.data()));
+    };
+    fetchCourses();
 
     if (editingExam) {
       setFormData({
@@ -44,7 +50,7 @@ export default function AddExam() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     const newErrors = {};
     Object.keys(formData).forEach((key) => {
@@ -52,19 +58,25 @@ export default function AddExam() {
     });
     setError(newErrors);
     if (Object.values(newErrors).some(Boolean)) {
-      alert("Please fill in all fields correctly");
       return;
     }
 
-    const saved = localStorage.getItem('exams');
-    const examsArray = saved ? JSON.parse(saved) : [];
-    const updated = editingExam
-      ? examsArray.map(e => e.id === editingExam.id ? { ...e, ...formData } : e)
-      : [...examsArray, { ...formData, id: Date.now(), submittedStudents: [] }];
+    const dataToSave = {
+      ...formData,
+      submittedStudents: editingExam?.submittedStudents || [],
+    };
 
-    localStorage.setItem("exams", JSON.stringify(updated));
-    alert("Exam saved successfully!");
-    navigate("/exams");
+    try {
+      if (editingExam?.id) {
+        const ref = doc(firestore, "exams", editingExam.id);
+        await updateDoc(ref, dataToSave);
+      } else {
+        await addDoc(collection(firestore, "exams"), dataToSave);
+      }
+      navigate("/exams");
+    } catch (error) {
+      console.error("Error saving exam:", error);
+    }
   };
 
   return (

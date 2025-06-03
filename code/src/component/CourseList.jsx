@@ -1,3 +1,4 @@
+// CourseList.jsx
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
@@ -63,11 +64,19 @@ export default function CourseList() {
   };
 
   const handleAddStudentToCourse = async () => {
-    const updatedEnrolled = students.filter((s) => selectedStudents.includes(s.studentId));
+    const updatedEnrolled = students
+      .filter((s) => selectedStudents.includes(s.studentId))
+      .map((s) => ({
+        studentId: s.studentId,
+        firstName: s.firstName,
+        lastName: s.lastName,
+      }));
+
     const updatedCourse = {
       ...selectedCourse,
       enrolledStudents: updatedEnrolled,
     };
+
     await updateCourse(updatedCourse);
     const updatedCourses = courses.map((c) =>
       c.courseCode === updatedCourse.courseCode ? updatedCourse : c
