@@ -1,10 +1,10 @@
-// CourseList.jsx
+// CourseList.jsx – מציג ציונים ושלב השלמה לסטודנטים
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Dialog, DialogTitle, DialogContent,
   DialogActions, MenuItem, Select, InputLabel, FormControl, OutlinedInput,
-  Checkbox, ListItemText, Chip, Stack, Divider, Tooltip
+  Checkbox, ListItemText, Chip, Stack, Divider, Tooltip, TextField
 } from "@mui/material";
 import { Add, PersonAdd, Edit, Delete, Close, RemoveCircle } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +21,7 @@ export default function CourseList() {
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedDegree, setSelectedDegree] = useState("");
-  const [selectedStudents, setSelectedStudents] = useState([]);
+  const [selectedStudents, setSelectedStudents] = useState([]); // [{ studentId, grade }]
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [originalStudents, setOriginalStudents] = useState([]);
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ export default function CourseList() {
   };
 
   const handleRemoveStudentFromCourse = (studentId) => {
-    setSelectedStudents((prev) => prev.filter((id) => id !== studentId));
+    setSelectedStudents((prev) => prev.filter((s) => s.studentId !== studentId));
   };
 
   const handleRemoveStudentDirectly = async (course, studentId) => {
@@ -63,14 +63,30 @@ export default function CourseList() {
     );
   };
 
+  const toggleGrade = (studentId, grade) => {
+    const parsed = parseInt(grade);
+    setSelectedStudents((prev) =>
+      prev.map((s) =>
+        s.studentId === studentId
+          ? { ...s, grade: parsed, completed: parsed >= 60 }
+          : s
+      )
+    );
+  };
+
   const handleAddStudentToCourse = async () => {
     const updatedEnrolled = students
-      .filter((s) => selectedStudents.includes(s.studentId))
-      .map((s) => ({
-        studentId: s.studentId,
-        firstName: s.firstName,
-        lastName: s.lastName,
-      }));
+      .filter((s) => selectedStudents.some((sel) => sel.studentId === s.studentId))
+      .map((s) => {
+        const match = selectedStudents.find((sel) => sel.studentId === s.studentId);
+        return {
+          studentId: s.studentId,
+          firstName: s.firstName,
+          lastName: s.lastName,
+          grade: match?.grade || 0,
+          completed: match?.grade >= 60,
+        };
+      });
 
     const updatedCourse = {
       ...selectedCourse,
@@ -88,9 +104,12 @@ export default function CourseList() {
   const handleOpenDialog = async (courseCode) => {
     const course = await getCourseByCode(courseCode);
     setSelectedCourse(course);
-    const studentIds = course.enrolledStudents?.map((s) => s.studentId) || [];
-    setSelectedStudents(studentIds);
-    setOriginalStudents(studentIds);
+    const studentObjects = course.enrolledStudents?.map((s) => ({
+      studentId: s.studentId,
+      grade: s.grade || 0,
+    })) || [];
+    setSelectedStudents(studentObjects);
+    setOriginalStudents(studentObjects);
   };
 
   const handleCloseDialog = () => {
@@ -166,12 +185,19 @@ export default function CourseList() {
                     {course.enrolledStudents?.length ? (
                       <Stack direction="row" spacing={1} flexWrap="wrap">
                         {course.enrolledStudents.map((s) => (
-                          <Tooltip title="Remove Student" key={s.studentId}>
+                          <Tooltip
+                            key={s.studentId}
+                            title={`Grade: ${s.grade || 0} | ${s.completed ? "✔ Completed" : "In Progress"}`}
+                          >
                             <Chip
                               label={`${s.firstName} ${s.lastName}`}
                               onDelete={() => handleRemoveStudentDirectly(course, s.studentId)}
                               deleteIcon={<RemoveCircle />}
-                              sx={{ mb: 1, bgcolor: "#81c784" }}
+                              sx={{
+                                mb: 1,
+                                bgcolor: s.completed ? "#388e3c" : "#81c784",
+                                color: s.completed ? "#fff" : "#000",
+                              }}
                             />
                           </Tooltip>
                         ))}
@@ -205,44 +231,48 @@ export default function CourseList() {
       <Dialog open={!!selectedCourse} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Add Students to Course</DialogTitle>
         <DialogContent>
-          {selectedStudents.length > 0 && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle1" fontWeight="bold">Already Enrolled:</Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" mt={1}>
-                {selectedStudents.map((id) => {
-                  const s = students.find((stu) => stu.studentId === id);
-                  return (
-                    s && (
-                      <Chip
-                        key={id}
-                        label={`${s.firstName} ${s.lastName}`}
-                        onDelete={() => handleRemoveStudentFromCourse(id)}
-                        deleteIcon={<Close />}
-                        sx={{ mb: 1, bgcolor: "#81c784" }}
-                      />
-                    )
-                  );
-                })}
-              </Stack>
-              <Divider sx={{ mt: 2 }} />
-            </Box>
-          )}
-
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Select Students</InputLabel>
             <Select
               multiple
-              value={selectedStudents}
-              onChange={(e) => setSelectedStudents(e.target.value)}
+              value={selectedStudents.map((s) => s.studentId)}
+              onChange={(e) => {
+                const selectedIds = e.target.value;
+                setSelectedStudents((prev) => {
+                  const existing = prev.filter((s) => selectedIds.includes(s.studentId));
+                  const added = selectedIds
+                    .filter((id) => !existing.some((s) => s.studentId === id))
+                    .map((id) => ({ studentId: id, grade: 0 }));
+                  return [...existing, ...added];
+                });
+              }}
               input={<OutlinedInput label="Select Students" />}
-              renderValue={(selected) => selected.map(getStudentName).join(", ")}
+              renderValue={(selected) =>
+                selected.map(getStudentName).join(", ")
+              }
             >
-              {students.map((s) => (
-                <MenuItem key={s.studentId} value={s.studentId}>
-                  <Checkbox checked={selectedStudents.includes(s.studentId)} />
-                  <ListItemText primary={`${s.firstName} ${s.lastName}`} />
-                </MenuItem>
-              ))}
+              {students.map((s) => {
+                const selected = selectedStudents.find((sel) => sel.studentId === s.studentId);
+                return (
+                  <MenuItem key={s.studentId} value={s.studentId}>
+                    <Checkbox checked={!!selected} />
+                    <ListItemText
+                      primary={`${s.firstName} ${s.lastName}`}
+                      secondary={selected ? (
+                        <TextField
+                          type="number"
+                          label="Grade"
+                          value={selected.grade || ""}
+                          onChange={(e) => toggleGrade(s.studentId, e.target.value)}
+                          inputProps={{ min: 0, max: 100 }}
+                          size="small"
+                          sx={{ width: 100, mt: 1 }}
+                        />
+                      ) : null}
+                    />
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
         </DialogContent>
@@ -253,7 +283,7 @@ export default function CourseList() {
             variant="contained"
             sx={{ bgcolor: "#81c784", "&:hover": { bgcolor: "#66bb6a" } }}
           >
-            Add
+            Save
           </Button>
         </DialogActions>
       </Dialog>

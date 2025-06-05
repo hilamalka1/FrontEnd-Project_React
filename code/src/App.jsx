@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Box } from '@mui/material';
+import { StudentProvider } from './component/StudentContext';
+
 import Header from './component/Header';
 import AddEvent from './component/AddEvent';
 import EventList from './component/EventList';
@@ -15,10 +17,10 @@ import AddAssignment from './component/AddAssignment';
 import ExamList from './component/ExamList';
 import AddExam from './component/AddExam';
 import Support from './component/Support';
+import Dashboard from './component/Dashboard'; // ✅ הייבוא החסר
 
 export default function App() {
   useEffect(() => {
-    // 🔵 Static default data for initialization
     const defaultStudents = Array.from({ length: 10 }, (_, i) => ({
       firstName: `First${i}`,
       lastName: `Last${i}`,
@@ -64,7 +66,6 @@ export default function App() {
       audienceValue: "",
     }));
 
-    // 🔵 Load data into localStorage if missing
     if (!localStorage.getItem("students")) {
       localStorage.setItem("students", JSON.stringify(defaultStudents));
     }
@@ -83,25 +84,28 @@ export default function App() {
   }, []);
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      <Header />
-      <Routes>
-        <Route path='/' element={<Home />} />
-        <Route path='/header' element={<Header />} />
-        <Route path='/info' element={<Info />} />
-        <Route path='/studentinfo' element={<AddStudent />} />
-        <Route path='/students' element={<StudentList />} />
-        <Route path='/courses' element={<CourseList />} />
-        <Route path='/add-course' element={<AddCourses />} />
-        <Route path='/add-student' element={<AddStudent />} />
-        <Route path='/assignments' element={<AssignmentList />} />
-        <Route path='/add-assignment' element={<AddAssignment />} />
-        <Route path='/exams' element={<ExamList />} />
-        <Route path='/add-exam' element={<AddExam />} />
-        <Route path='/events' element={<EventList />} />
-        <Route path='/add-event' element={<AddEvent />} />
-        <Route path='/support' element={<Support />} />
-      </Routes>
-    </Box>
+    <StudentProvider>
+      <Box sx={{ minHeight: '100vh' }}>
+        <Header />
+        <Routes>
+          <Route path='/' element={<Home />} />
+          <Route path='/header' element={<Header />} />
+          <Route path='/info' element={<Info />} />
+          <Route path='/dashboard' element={<Dashboard />} /> {/* ✅ נתיב חדש */}
+          <Route path='/studentinfo' element={<AddStudent />} />
+          <Route path='/students' element={<StudentList />} />
+          <Route path='/courses' element={<CourseList />} />
+          <Route path='/add-course' element={<AddCourses />} />
+          <Route path='/add-student' element={<AddStudent />} />
+          <Route path='/assignments' element={<AssignmentList />} />
+          <Route path='/add-assignment' element={<AddAssignment />} />
+          <Route path='/exams' element={<ExamList />} />
+          <Route path='/add-exam' element={<AddExam />} />
+          <Route path='/events' element={<EventList />} />
+          <Route path='/add-event' element={<AddEvent />} />
+          <Route path='/support' element={<Support />} />
+        </Routes>
+      </Box>
+    </StudentProvider>
   );
 }

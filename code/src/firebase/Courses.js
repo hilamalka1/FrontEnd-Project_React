@@ -4,7 +4,7 @@ import {
   getDocs,
   doc,
   getDoc,
-  updateDoc,
+  setDoc,
   deleteDoc,
   query,
   where
@@ -23,7 +23,7 @@ export async function updateCourse(course) {
   if (snapshot.empty) throw new Error("Course not found for update");
 
   const docRef = snapshot.docs[0].ref;
-  return updateDoc(docRef, { ...course });
+  return setDoc(docRef, course); // מחליף את כל המסמך
 }
 
 // מחיקת קורס לפי courseCode

@@ -4,21 +4,33 @@ import {
   Box,
   Toolbar,
   Typography,
-  Button
+  Button,
+  Menu,
+  MenuItem
 } from '@mui/material';
-import { Link } from 'react-router-dom';
-import SchoolIcon from '@mui/icons-material/School'; 
+import { Link, useNavigate } from 'react-router-dom';
+import SchoolIcon from '@mui/icons-material/School';
 
 export default function Header() {
-  const navLinks = [
-    { label: 'Home Page', path: '/' },
+  const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
+  const managementLinks = [
     { label: 'Students', path: '/students' },
     { label: 'Courses', path: '/courses' },
     { label: 'Assignments', path: '/assignments' },
     { label: 'Exams', path: '/exams' },
-    { label: 'Events/Messages', path: '/events' },
-    { label: 'Info', path: '/info' },
-    { label: 'Support', path: '/support' }
+    { label: 'Messages', path: '/events' },
+    { label: 'Support', path: '/support' },
+  ];
+
+  const navLinks = [
+    { label: 'Home Page', path: '/' },
+    { label: 'Info', path: '/info' }
   ];
 
   return (
@@ -48,6 +60,7 @@ export default function Header() {
             </Typography>
           </Box>
 
+          {/* Regular navigation links */}
           {navLinks.map((item) => (
             <Button
               key={item.label}
@@ -59,6 +72,34 @@ export default function Header() {
               {item.label}
             </Button>
           ))}
+
+          {/* Dropdown menu for user management */}
+          <Button
+            color="inherit"
+            onClick={handleMenuOpen}
+            sx={{ textTransform: 'none' }}
+          >
+            User Management
+          </Button>
+          <Menu
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleMenuClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          >
+            {managementLinks.map((item) => (
+              <MenuItem
+                key={item.label}
+                onClick={() => {
+                  navigate(item.path);
+                  handleMenuClose();
+                }}
+              >
+                {item.label}
+              </MenuItem>
+            ))}
+          </Menu>
         </Toolbar>
       </AppBar>
     </Box>

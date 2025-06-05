@@ -1,32 +1,34 @@
-// Home.jsx – גרסה סופית עם שמות קורסים בכל מקום במקום קוד
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, MenuItem, Select, FormControl, InputLabel, Card,
-  List, ListItem, ListItemIcon, ListItemText, Divider, Button, Dialog,
-  DialogTitle, DialogContent, DialogActions, Avatar
+  List, ListItem, ListItemIcon, ListItemText, Divider, Button, Avatar
 } from "@mui/material";
-import { School, Email, EmojiObjects } from "@mui/icons-material";
+import { School, Email, EmojiObjects, Info } from "@mui/icons-material";
 import { collection, getDocs } from "firebase/firestore";
 import { firestore } from "../firebase/firebaseConfig";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import { useStudent } from "./StudentContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
-  const [students, setStudents] = useState([]);
-  const [selectedStudentId, setSelectedStudentId] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const {
+    selectedStudentId,
+    selectedStudent,
+    students,
+    updateSelectedStudent,
+    updateStudents,
+  } = useStudent();
+
   const [courses, setCourses] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [exams, setExams] = useState([]);
   const [events, setEvents] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [openMailDialog, setOpenMailDialog] = useState(false);
-  const [mailRecipient, setMailRecipient] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("Semester A");
+  const navigate = useNavigate();
 
   const semesterOptions = ["Semester A", "Semester B", "Summer", "All Year"];
-
   const toDateString = (timestamp) =>
     timestamp?.toDate?.().toISOString().split("T")[0] ?? timestamp;
 
@@ -38,24 +40,26 @@ export default function Home() {
       const eSnap = await getDocs(collection(firestore, "exams"));
       const evSnap = await getDocs(collection(firestore, "events"));
 
-      setStudents(sSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setCourses(cSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setAssignments(aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setExams(eSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setEvents(evSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const studentsData = sSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      updateStudents(studentsData);
+      setCourses(cSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      setAssignments(aSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      setExams(eSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      setEvents(evSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     };
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    const student = students.find((s) => s.studentId === selectedStudentId);
-    setSelectedStudent(student || null);
-  }, [selectedStudentId, students]);
+  }, [updateStudents]);
 
   const getStudentCourses = () =>
+    courses.filter(
+      (c) =>
+        c.enrolledStudents?.some((s) => s.studentId === selectedStudentId) &&
+        (selectedSemester === "All Year" || c.semester === selectedSemester)
+    );
+
+  const getAllStudentCourses = () =>
     courses.filter((c) =>
-      c.enrolledStudents?.some((s) => s.studentId === selectedStudentId) &&
-      (selectedSemester === "All Year" || c.semester === selectedSemester)
+      c.enrolledStudents?.some((s) => s.studentId === selectedStudentId)
     );
 
   const getStudentEvents = () =>
@@ -64,7 +68,7 @@ export default function Home() {
       if (ev.audienceType === "degree")
         return selectedStudent?.degreeProgram === ev.audienceValue;
       if (ev.audienceType === "course")
-        return getStudentCourses().some((c) => c.courseCode === ev.audienceValue);
+        return getAllStudentCourses().some((c) => c.courseCode === ev.audienceValue);
       if (ev.audienceType === "students")
         return ev.audienceValue.includes(selectedStudentId);
       return false;
@@ -72,46 +76,34 @@ export default function Home() {
 
   const getStudentExams = () =>
     exams.filter((e) =>
-      getStudentCourses().some((c) => c.courseCode === e.courseCode)
+      getAllStudentCourses().some((c) => c.courseCode === e.courseCode)
     );
 
   const getStudentAssignments = () =>
     assignments.filter((a) =>
-      getStudentCourses().some((c) => c.courseCode === a.courseCode)
+      getAllStudentCourses().some((c) => c.courseCode === a.courseCode)
     );
 
   const calendarEvents = [
-    ...getStudentEvents().map(ev => ({
+    ...getStudentEvents().map((ev) => ({
       id: `event-${ev.id}`,
       title: ev.eventName,
       date: toDateString(ev.eventDate),
       backgroundColor: "#2196f3",
-      extendedProps: ev
     })),
-    ...getStudentExams().map(ex => ({
+    ...getStudentExams().map((ex) => ({
       id: `exam-${ex.id}`,
       title: ex.examName,
       date: toDateString(ex.examDate),
       backgroundColor: "#f44336",
-      extendedProps: ex
     })),
-    ...getStudentAssignments().map(a => ({
+    ...getStudentAssignments().map((a) => ({
       id: `assignment-${a.id}`,
       title: a.assignmentTitle,
       date: toDateString(a.dueDate),
       backgroundColor: "#64b5f6",
-      extendedProps: a
-    }))
+    })),
   ];
-
-  const handleEventClick = (info) => {
-    setSelectedEvent(info.event.extendedProps);
-  };
-
-  const handleOpenMailDialog = (email) => {
-    setMailRecipient(email);
-    setOpenMailDialog(true);
-  };
 
   return (
     <Box p={2} sx={{ bgcolor: "#f9fff9", minHeight: "100vh" }}>
@@ -120,7 +112,7 @@ export default function Home() {
         <Select
           value={selectedStudentId}
           label="Select Student"
-          onChange={(e) => setSelectedStudentId(e.target.value)}
+          onChange={(e) => updateSelectedStudent(e.target.value)}
           sx={{ bgcolor: "#e8f5e9" }}
         >
           {students.map((student) => (
@@ -150,6 +142,15 @@ export default function Home() {
             </Box>
           </Card>
 
+          <Button
+            variant="contained"
+            startIcon={<Info />}
+            sx={{ mb: 3, bgcolor: "#81c784" }}
+            onClick={() => navigate("/dashboard")}
+          >
+            View Dashboard
+          </Button>
+
           <FormControl size="small" sx={{ mb: 2, borderRadius: 2, width: 250 }}>
             <InputLabel>Select Semester</InputLabel>
             <Select
@@ -169,18 +170,7 @@ export default function Home() {
           <List sx={{ bgcolor: "#e8f5e9", borderRadius: 2 }}>
             {getStudentCourses().map((course) => (
               <React.Fragment key={course.id}>
-                <ListItem
-                  secondaryAction={
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<Email />}
-                      onClick={() => handleOpenMailDialog(course.lecturerEmail)}
-                    >
-                      Message Lecturer
-                    </Button>
-                  }
-                >
+                <ListItem>
                   <ListItemIcon><School /></ListItemIcon>
                   <ListItemText
                     primary={course.courseName}
@@ -197,11 +187,11 @@ export default function Home() {
               🧪 Exams
             </Typography>
             {getStudentExams().map((ex) => {
-              const course = getStudentCourses().find((c) => c.courseCode === ex.courseCode);
+              const course = courses.find((c) => c.courseCode === ex.courseCode);
               const courseName = course ? course.courseName : ex.courseCode;
               return (
                 <Typography key={ex.id} sx={{ fontSize: "1.1rem", mb: 1 }}>
-                  {ex.examName} | 📅 {toDateString(ex.examDate)} | 🧪 {ex.examType} | 📘 {courseName}
+                  {ex.examName} | 📅 {toDateString(ex.examDate)} | 📘 {courseName}
                 </Typography>
               );
             })}
@@ -210,11 +200,11 @@ export default function Home() {
               📝 Assignments
             </Typography>
             {getStudentAssignments().map((a) => {
-              const course = getStudentCourses().find((c) => c.courseCode === a.courseCode);
+              const course = courses.find((c) => c.courseCode === a.courseCode);
               const courseName = course ? course.courseName : a.courseCode;
               return (
                 <Typography key={a.id} sx={{ fontSize: "1.1rem", mb: 1 }}>
-                  {a.assignmentTitle} | 📅 Due: {toDateString(a.dueDate)} | 📘 {courseName} | 📝 {a.description}
+                  {a.assignmentTitle} | 📅 Due: {toDateString(a.dueDate)} | 📘 {courseName}
                 </Typography>
               );
             })}
@@ -235,7 +225,6 @@ export default function Home() {
               initialView="dayGridMonth"
               height="auto"
               events={calendarEvents}
-              eventClick={handleEventClick}
             />
           </Box>
         </>
