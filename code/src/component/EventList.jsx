@@ -1,8 +1,7 @@
-// EventList.jsx - גרסה מתקדמת עם Firestore ופורמט אמריקאי לשעות
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Button, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, IconButton
+  TableContainer, TableHead, TableRow, Paper, IconButton, CircularProgress
 } from "@mui/material";
 import { Edit, Add, Delete } from "@mui/icons-material";
 import { useNavigate, Link } from "react-router-dom";
@@ -12,12 +11,21 @@ import { firestore } from "../firebase/firebaseConfig";
 export default function EventList() {
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null); // ID של אירוע במחיקה
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const snap = await getDocs(collection(firestore, "events"));
-      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setEvents(data);
+      try {
+        const snap = await getDocs(collection(firestore, "events"));
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setEvents(data);
+      } catch (err) {
+        console.error("Error fetching events:", err);
+        alert("Failed to load events");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchEvents();
   }, []);
@@ -26,8 +34,16 @@ export default function EventList() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this event or message?")) return;
-    await deleteDoc(doc(firestore, "events", id));
-    setEvents((prev) => prev.filter((e) => e.id !== id));
+    setActionLoading(id);
+    try {
+      await deleteDoc(doc(firestore, "events", id));
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      console.error("Error deleting event:", err);
+      alert("Failed to delete event");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const formatTime = (timeStr) =>
@@ -36,6 +52,24 @@ export default function EventList() {
       minute: "2-digit",
       hour12: true,
     });
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        height="80vh"
+        gap={2}
+      >
+        <CircularProgress size={60} thickness={5} sx={{ color: "#4caf50" }} />
+        <Typography variant="h6" color="textSecondary">
+          Loading events and messages...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 4 }}>
@@ -76,14 +110,15 @@ export default function EventList() {
             {events.length > 0 ? events.map((event) => (
               <TableRow key={event.id} hover>
                 <TableCell>
-                  {event.audienceType === "all" || event.audienceType === "degree" || event.audienceType === "course"
-                    ? "Event"
-                    : "Message"}
+                  {["all", "degree", "course"].includes(event.audienceType) ? "Event" : "Message"}
                 </TableCell>
                 <TableCell>{event.eventName}</TableCell>
                 <TableCell>{event.description}</TableCell>
                 <TableCell>
-                  {event.eventDate} {event.startTime && event.endTime ? `(${formatTime(event.startTime)} - ${formatTime(event.endTime)})` : ""}
+                  {event.eventDate}{" "}
+                  {event.startTime && event.endTime
+                    ? `(${formatTime(event.startTime)} - ${formatTime(event.endTime)})`
+                    : ""}
                 </TableCell>
                 <TableCell>
                   {event.audienceType === "all"
@@ -101,25 +136,31 @@ export default function EventList() {
                     onClick={() => handleEdit(event)}
                     title="Edit"
                     aria-label="edit"
-                    size="large"
                     sx={{ color: '#388e3c' }}
                   >
                     <Edit />
                   </IconButton>
+
                   <IconButton
                     onClick={() => handleDelete(event.id)}
                     title="Delete"
                     aria-label="delete"
-                    size="large"
                     sx={{ color: '#d32f2f' }}
+                    disabled={actionLoading === event.id}
                   >
-                    <Delete />
+                    {actionLoading === event.id ? (
+                      <CircularProgress size={20} thickness={5} />
+                    ) : (
+                      <Delete />
+                    )}
                   </IconButton>
                 </TableCell>
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={6} align="center">No events or messages available.</TableCell>
+                <TableCell colSpan={6} align="center">
+                  No events or messages available.
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -128,3 +169,4 @@ export default function EventList() {
     </Box>
   );
 }
+  

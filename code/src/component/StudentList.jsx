@@ -1,4 +1,4 @@
-// StudentList.jsx - גרסה מתוקנת עם שליפה מ-Firestore
+// StudentList.jsx – עם פעולה ממוקדת ושדרוג טעינה של עמוד
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -13,6 +13,7 @@ import {
   Paper,
   IconButton,
   TextField,
+  CircularProgress,
 } from "@mui/material";
 import { Add, Edit, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +23,8 @@ import { firestore } from "../firebase/firebaseConfig";
 export default function StudentList() {
   const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState({ id: null, type: null }); // מזהה פעולה וסטודנט
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,6 +35,8 @@ export default function StudentList() {
         setStudents(data);
       } catch (error) {
         console.error("Error fetching students:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchStudents();
@@ -45,18 +50,42 @@ export default function StudentList() {
   );
 
   const handleEdit = (student) => {
-    navigate("/add-student", { state: { student } });
+    setActionLoading({ id: student.id, type: "edit" });
+    setTimeout(() => {
+      navigate("/add-student", { state: { student } });
+    }, 300);
   };
 
   const handleDelete = async (studentId) => {
     if (!window.confirm("Are you sure you want to delete this student?")) return;
+    setActionLoading({ id: studentId, type: "delete" });
     try {
       await deleteDoc(doc(firestore, "students", studentId));
       setStudents((prev) => prev.filter((s) => s.id !== studentId));
     } catch (error) {
       console.error("Error deleting student:", error);
+    } finally {
+      setActionLoading({ id: null, type: null });
     }
   };
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        height="80vh"
+        gap={2}
+      >
+        <CircularProgress size={60} thickness={5} sx={{ color: "#4caf50" }} />
+        <Typography variant="h6" color="textSecondary">
+          Loading students...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 4 }}>
@@ -113,15 +142,26 @@ export default function StudentList() {
                     onClick={() => handleEdit(student)}
                     sx={{ color: "#388e3c" }}
                     aria-label="edit"
+                    disabled={actionLoading.id === student.id}
                   >
-                    <Edit />
+                    {actionLoading.id === student.id && actionLoading.type === "edit" ? (
+                      <CircularProgress size={20} thickness={5} />
+                    ) : (
+                      <Edit />
+                    )}
                   </IconButton>
+
                   <IconButton
                     onClick={() => handleDelete(student.id)}
                     color="error"
                     aria-label="delete"
+                    disabled={actionLoading.id === student.id}
                   >
-                    <Delete />
+                    {actionLoading.id === student.id && actionLoading.type === "delete" ? (
+                      <CircularProgress size={20} thickness={5} />
+                    ) : (
+                      <Delete />
+                    )}
                   </IconButton>
                 </TableCell>
               </TableRow>

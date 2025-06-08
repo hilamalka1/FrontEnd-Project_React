@@ -1,8 +1,7 @@
-// AddEvent.jsx - שומר ב-Firestore וכולל שדות 'משעה עד שעה'
 import React, { useState, useEffect } from "react";
 import {
   Box, TextField, Button, Typography, MenuItem, FormControl,
-  InputLabel, Select, Checkbox, ListItemText, OutlinedInput
+  InputLabel, Select, Checkbox, ListItemText, OutlinedInput, CircularProgress
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { addDoc, collection, updateDoc, doc, getDocs } from "firebase/firestore";
@@ -16,11 +15,15 @@ export default function AddEvent() {
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedStudents, setSelectedStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
   const [formData, setFormData] = useState({
     eventName: "", description: "", eventDate: "",
     startTime: "", endTime: "",
     audienceType: "all", audienceValue: ""
   });
+
   const [error, setError] = useState({});
 
   const degreePrograms = [
@@ -30,19 +33,25 @@ export default function AddEvent() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const courseSnap = await getDocs(collection(firestore, "courses"));
-      const studentSnap = await getDocs(collection(firestore, "students"));
-      setCourses(courseSnap.docs.map(doc => doc.data()));
-      setStudents(studentSnap.docs.map(doc => doc.data()));
+      try {
+        const courseSnap = await getDocs(collection(firestore, "courses"));
+        const studentSnap = await getDocs(collection(firestore, "students"));
+        setCourses(courseSnap.docs.map(doc => doc.data()));
+        setStudents(studentSnap.docs.map(doc => doc.data()));
+        if (editingEvent) {
+          setFormData({ ...editingEvent });
+          if (editingEvent.audienceType === "students") {
+            setSelectedStudents(editingEvent.audienceValue || []);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading data:", err);
+        alert("Failed to load data");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
-
-    if (editingEvent) {
-      setFormData({ ...editingEvent });
-      if (editingEvent.audienceType === "students") {
-        setSelectedStudents(editingEvent.audienceValue || []);
-      }
-    }
   }, [editingEvent]);
 
   const validateField = (name, value) => {
@@ -78,16 +87,22 @@ export default function AddEvent() {
     const finalAudienceValue = formData.audienceType === "students" ? selectedStudents : formData.audienceValue;
     const dataToSave = { ...formData, audienceValue: finalAudienceValue };
 
+    setSaving(true);
     try {
       if (editingEvent?.id) {
         const ref = doc(firestore, "events", editingEvent.id);
         await updateDoc(ref, dataToSave);
+        alert("Event updated successfully!");
       } else {
         await addDoc(collection(firestore, "events"), dataToSave);
+        alert("Event saved successfully!");
       }
       navigate("/events");
     } catch (err) {
       console.error("Error saving event:", err);
+      alert("Failed to save event");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -144,8 +159,21 @@ export default function AddEvent() {
     return null;
   };
 
+  if (loading) {
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="80vh" gap={2}>
+        <CircularProgress size={60} thickness={5} sx={{ color: "#4caf50" }} />
+        <Typography variant="h6" color="textSecondary">Loading form data...</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box component="form" onSubmit={handleSave} sx={{ display: "flex", flexDirection: "column", maxWidth: 500, width: "90%", mx: "auto", p: 4, gap: 2, boxShadow: 3, bgcolor: "#f5f5f5", borderRadius: 2 }}>
+    <Box component="form" onSubmit={handleSave} sx={{
+      display: "flex", flexDirection: "column", maxWidth: 500,
+      width: "90%", mx: "auto", p: 4, gap: 2,
+      boxShadow: 3, bgcolor: "#f5f5f5", borderRadius: 2
+    }}>
       <Typography variant="h5" align="center" fontWeight="bold" gutterBottom>
         {editingEvent ? "Edit Event" : "Add New Event"}
       </Typography>
@@ -168,8 +196,9 @@ export default function AddEvent() {
 
       {renderAudienceSelect()}
 
-      <Button type="submit" variant="contained" sx={{ bgcolor: '#81c784', '&:hover': { bgcolor: '#66bb6a' } }}>
-        {editingEvent ? "Update Event" : "Save Event"}
+      <Button type="submit" variant="contained" disabled={saving}
+        sx={{ bgcolor: '#81c784', '&:hover': { bgcolor: '#66bb6a' } }}>
+        {saving ? <CircularProgress size={24} color="inherit" /> : editingEvent ? "Update Event" : "Save Event"}
       </Button>
 
       <Button variant="outlined" onClick={() => navigate("/events")}

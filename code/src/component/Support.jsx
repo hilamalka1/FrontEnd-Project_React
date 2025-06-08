@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -7,12 +7,32 @@ import {
   AccordionDetails,
   Container,
   Button,
-  Stack
+  Stack,
+  CircularProgress
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Link } from 'react-router-dom';
 
 export default function Support() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 800); // Simulate a short delay for animation/loading
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="80vh" flexDirection="column" gap={2}>
+        <CircularProgress size={60} thickness={5} sx={{ color: "#4caf50" }} />
+        <Typography variant="h6" color="textSecondary">Loading Support Center...</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Container maxWidth="md" sx={{ mt: 6, mb: 6 }}>
       <Typography variant="h4" align="center" mb={2}>
@@ -119,7 +139,6 @@ export default function Support() {
           </Button>
         </AccordionDetails>
       </Accordion>
-
     </Container>
   );
 }

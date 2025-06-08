@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, MenuItem, Select, FormControl, InputLabel, Card,
-  List, ListItem, ListItemIcon, ListItemText, Divider, Button, Avatar
+  List, ListItem, ListItemIcon, ListItemText, Divider, Button, Avatar, CircularProgress
 } from "@mui/material";
-import { School, Email, EmojiObjects, Info } from "@mui/icons-material";
+import { School, EmojiObjects, Info } from "@mui/icons-material";
 import { collection, getDocs } from "firebase/firestore";
 import { firestore } from "../firebase/firebaseConfig";
 import FullCalendar from "@fullcalendar/react";
@@ -26,6 +26,7 @@ export default function Home() {
   const [exams, setExams] = useState([]);
   const [events, setEvents] = useState([]);
   const [selectedSemester, setSelectedSemester] = useState("Semester A");
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const semesterOptions = ["Semester A", "Semester B", "Summer", "All Year"];
@@ -34,18 +35,26 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const sSnap = await getDocs(collection(firestore, "students"));
-      const cSnap = await getDocs(collection(firestore, "courses"));
-      const aSnap = await getDocs(collection(firestore, "assignments"));
-      const eSnap = await getDocs(collection(firestore, "exams"));
-      const evSnap = await getDocs(collection(firestore, "events"));
+      try {
+        const [sSnap, cSnap, aSnap, eSnap, evSnap] = await Promise.all([
+          getDocs(collection(firestore, "students")),
+          getDocs(collection(firestore, "courses")),
+          getDocs(collection(firestore, "assignments")),
+          getDocs(collection(firestore, "exams")),
+          getDocs(collection(firestore, "events")),
+        ]);
 
-      const studentsData = sSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      updateStudents(studentsData);
-      setCourses(cSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      setAssignments(aSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      setExams(eSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      setEvents(evSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        updateStudents(sSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        setCourses(cSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        setAssignments(aSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        setExams(eSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        setEvents(evSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      } catch (error) {
+        console.error("Error loading data:", error);
+        alert("Failed to load student data");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [updateStudents]);
@@ -104,6 +113,20 @@ export default function Home() {
       backgroundColor: "#64b5f6",
     })),
   ];
+
+  if (loading) {
+    return (
+      <Box
+        minHeight="100vh"
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        bgcolor="#f9fff9"
+      >
+        <CircularProgress size={60} color="success" />
+      </Box>
+    );
+  }
 
   return (
     <Box p={2} sx={{ bgcolor: "#f9fff9", minHeight: "100vh" }}>

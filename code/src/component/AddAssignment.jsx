@@ -5,7 +5,7 @@ import {
   Button,
   Typography,
   MenuItem,
-  LinearProgress,
+  CircularProgress
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -29,12 +29,19 @@ export default function AddAssignment() {
   });
   const [error, setError] = useState({});
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     const fetchCourses = async () => {
-      const snapshot = await getDocs(collection(firestore, "courses"));
-      const courseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setCourses(courseList);
+      try {
+        const snapshot = await getDocs(collection(firestore, "courses"));
+        const courseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setCourses(courseList);
+      } catch (err) {
+        console.error("Error fetching courses:", err);
+      } finally {
+        setInitialLoading(false);
+      }
     };
 
     fetchCourses();
@@ -78,10 +85,8 @@ export default function AddAssignment() {
     try {
       if (editingAssignment) {
         await updateAssignment(formData);
-        alert("Assignment updated successfully!");
       } else {
         await addAssignment({ ...formData, submittedStudents: [] });
-        alert("Assignment saved successfully!");
       }
       navigate("/assignments");
     } catch (error) {
@@ -92,11 +97,29 @@ export default function AddAssignment() {
     }
   };
 
-  return loading ? (
-    <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-      <LinearProgress sx={{ width: "80%" }} />
-    </Box>
-  ) : (
+  const handleCancel = () => {
+    navigate("/assignments");
+  };
+
+  if (initialLoading) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        height="80vh"
+        gap={2}
+      >
+        <CircularProgress size={60} thickness={5} sx={{ color: "#4caf50" }} />
+        <Typography variant="h6" color="textSecondary">
+          Loading assignment form...
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
     <Box
       component="form"
       onSubmit={handleSave}
@@ -174,21 +197,27 @@ export default function AddAssignment() {
         )}
       </TextField>
 
-      <Button
-        variant="contained"
-        type="submit"
-        sx={{ bgcolor: "#81c784", "&:hover": { bgcolor: "#66bb6a" } }}
-      >
-        {editingAssignment ? "Update Assignment" : "Save Assignment"}
-      </Button>
+      <Box display="flex" justifyContent="center" gap={2} mt={2}>
+        <Button
+          variant="contained"
+          type="submit"
+          sx={{ bgcolor: "#81c784", "&:hover": { bgcolor: "#66bb6a" }, minWidth: 100 }}
+          disabled={loading}
+        >
+          {loading ? (
+            <CircularProgress size={24} sx={{ color: "#fff" }} />
+          ) : editingAssignment ? "Update" : "Save"}
+        </Button>
 
-      <Button
-        variant="outlined"
-        onClick={() => navigate("/assignments")}
-        sx={{ borderColor: "#81c784", color: "#388e3c" }}
-      >
-        Cancel
-      </Button>
+        <Button
+          variant="outlined"
+          onClick={handleCancel}
+          sx={{ borderColor: "#81c784", color: "#388e3c" }}
+          disabled={loading}
+        >
+          Cancel
+        </Button>
+      </Box>
     </Box>
   );
 }

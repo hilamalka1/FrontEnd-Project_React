@@ -1,7 +1,6 @@
-// AddExam.jsx - שומר מבחנים ב-Firestore ומושך קורסים משם
 import React, { useState, useEffect } from "react";
 import {
-  Box, TextField, Button, Typography, MenuItem
+  Box, TextField, Button, Typography, MenuItem, CircularProgress
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { collection, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
@@ -13,6 +12,8 @@ export default function AddExam() {
   const editingExam = location.state?.exam || null;
 
   const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     examName: "",
     description: "",
@@ -23,19 +24,25 @@ export default function AddExam() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      const courseSnap = await getDocs(collection(firestore, "courses"));
-      setCourses(courseSnap.docs.map(doc => doc.data()));
+      try {
+        const courseSnap = await getDocs(collection(firestore, "courses"));
+        setCourses(courseSnap.docs.map(doc => doc.data()));
+        if (editingExam) {
+          setFormData({
+            examName: editingExam.examName,
+            description: editingExam.description,
+            examDate: editingExam.examDate,
+            courseCode: editingExam.courseCode,
+          });
+        }
+      } catch (err) {
+        console.error("Error loading courses:", err);
+        alert("Failed to load courses");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchCourses();
-
-    if (editingExam) {
-      setFormData({
-        examName: editingExam.examName,
-        description: editingExam.description,
-        examDate: editingExam.examDate,
-        courseCode: editingExam.courseCode,
-      });
-    }
   }, [editingExam]);
 
   const validateField = (name, value) => {
@@ -57,15 +64,14 @@ export default function AddExam() {
       newErrors[key] = validateField(key, formData[key]);
     });
     setError(newErrors);
-    if (Object.values(newErrors).some(Boolean)) {
-      return;
-    }
+    if (Object.values(newErrors).some(Boolean)) return;
 
     const dataToSave = {
       ...formData,
       submittedStudents: editingExam?.submittedStudents || [],
     };
 
+    setSaving(true);
     try {
       if (editingExam?.id) {
         const ref = doc(firestore, "exams", editingExam.id);
@@ -76,8 +82,20 @@ export default function AddExam() {
       navigate("/exams");
     } catch (error) {
       console.error("Error saving exam:", error);
+      alert("Failed to save exam");
+    } finally {
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="100vh" gap={2} bgcolor="#f9fff9">
+        <CircularProgress size={60} thickness={5} sx={{ color: "#4caf50" }} />
+        <Typography variant="h6" color="textSecondary">Loading courses...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -158,9 +176,10 @@ export default function AddExam() {
       <Button
         variant="contained"
         type="submit"
+        disabled={saving}
         sx={{ bgcolor: "#81c784", '&:hover': { bgcolor: "#66bb6a" } }}
       >
-        {editingExam ? "Update Exam" : "Save Exam"}
+        {saving ? <CircularProgress size={24} color="inherit" /> : (editingExam ? "Update Exam" : "Save Exam")}
       </Button>
 
       <Button

@@ -1,12 +1,12 @@
-// CourseList.jsx – מציג ציונים ושלב השלמה לסטודנטים
+// CourseList.jsx – גרסה עם טעינה מקצועית ואינדיקציית פעולה
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Dialog, DialogTitle, DialogContent,
   DialogActions, MenuItem, Select, InputLabel, FormControl, OutlinedInput,
-  Checkbox, ListItemText, Chip, Stack, Divider, Tooltip, TextField
+  Checkbox, ListItemText, Chip, Stack, Tooltip, TextField, CircularProgress
 } from "@mui/material";
-import { Add, PersonAdd, Edit, Delete, Close, RemoveCircle } from "@mui/icons-material";
+import { Add, PersonAdd, Edit, Delete, RemoveCircle } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import {
   listStudents,
@@ -21,18 +21,26 @@ export default function CourseList() {
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedDegree, setSelectedDegree] = useState("");
-  const [selectedStudents, setSelectedStudents] = useState([]); // [{ studentId, grade }]
+  const [selectedStudents, setSelectedStudents] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [originalStudents, setOriginalStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null); // מזהה של קורס בפעולה
   const navigate = useNavigate();
 
   useEffect(() => {
     const loadData = async () => {
-      const courseSnap = await getDocs(collection(firestore, "courses"));
-      const coursesData = courseSnap.docs.map((doc) => doc.data());
-      const studentsData = await listStudents();
-      setCourses(coursesData);
-      setStudents(studentsData);
+      try {
+        const courseSnap = await getDocs(collection(firestore, "courses"));
+        const coursesData = courseSnap.docs.map((doc) => doc.data());
+        const studentsData = await listStudents();
+        setCourses(coursesData);
+        setStudents(studentsData);
+      } catch (error) {
+        console.error("Error loading data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, []);
@@ -46,8 +54,15 @@ export default function CourseList() {
 
   const handleDeleteCourse = async (courseCode) => {
     if (!window.confirm("Delete this course?")) return;
-    await deleteCourseByCode(courseCode);
-    setCourses((prev) => prev.filter((c) => c.courseCode !== courseCode));
+    setActionLoading(courseCode);
+    try {
+      await deleteCourseByCode(courseCode);
+      setCourses((prev) => prev.filter((c) => c.courseCode !== courseCode));
+    } catch (error) {
+      console.error("Error deleting course:", error);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleRemoveStudentFromCourse = (studentId) => {
@@ -131,6 +146,24 @@ export default function CourseList() {
 
   const uniqueDegrees = [...new Set(courses.map((c) => c.degreeProgram).filter(Boolean))];
 
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        height="80vh"
+        gap={2}
+      >
+        <CircularProgress size={60} thickness={5} sx={{ color: "#4caf50" }} />
+        <Typography variant="h6" color="textSecondary">
+          Loading courses...
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 4 }}>
       <Typography variant="h4" mb={3} align="center" fontWeight="bold">
@@ -211,8 +244,17 @@ export default function CourseList() {
                     <IconButton onClick={() => handleEditCourse(course)} title="Edit Course">
                       <Edit />
                     </IconButton>
-                    <IconButton onClick={() => handleDeleteCourse(course.courseCode)} title="Delete Course" color="error">
-                      <Delete />
+                    <IconButton
+                      onClick={() => handleDeleteCourse(course.courseCode)}
+                      title="Delete Course"
+                      color="error"
+                      disabled={actionLoading === course.courseCode}
+                    >
+                      {actionLoading === course.courseCode ? (
+                        <CircularProgress size={20} thickness={5} />
+                      ) : (
+                        <Delete />
+                      )}
                     </IconButton>
                   </TableCell>
                 </TableRow>

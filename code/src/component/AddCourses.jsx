@@ -1,12 +1,12 @@
-// AddCourses.jsx – עם אפשרות לעדכון ציונים לכל סטודנט בקורס
+// AddCourses.jsx – גרסה משודרגת עם טעינה מקצועית וכפתור Cancel
 import React, { useState, useEffect } from "react";
 import {
   Box, TextField, Button, Typography, MenuItem, Stack, Chip,
   Divider, FormControl, InputLabel, Select, OutlinedInput,
-  Checkbox, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions, LinearProgress
+  Checkbox, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions,
+  CircularProgress
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Close } from "@mui/icons-material";
 import { addCourse, updateCourse, listStudents } from "../firebase/Courses";
 
 const semesterOptions = ["Semester A", "Semester B", "Summer"];
@@ -27,10 +27,11 @@ export default function AddCourses() {
     enrolledStudents: [],
   });
   const [students, setStudents] = useState([]);
-  const [selectedStudents, setSelectedStudents] = useState([]); // [{ studentId, grade }]
+  const [selectedStudents, setSelectedStudents] = useState([]);
   const [errors, setErrors] = useState({});
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -85,6 +86,7 @@ export default function AddCourses() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    setSaving(true);
     const enrolled = students
       .filter(s => selectedStudents.some(sel => sel.studentId === s.studentId))
       .map(s => {
@@ -102,15 +104,15 @@ export default function AddCourses() {
     try {
       if (editingCourse) {
         await updateCourse(courseToSave);
-        alert("Course updated successfully!");
       } else {
         await addCourse(courseToSave);
-        alert("Course saved successfully!");
       }
       setSummaryOpen(true);
     } catch (err) {
       alert("Failed to save course");
       console.error(err);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -119,13 +121,31 @@ export default function AddCourses() {
     navigate("/courses");
   };
 
-  return loading ? (
-    <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-      <LinearProgress sx={{ width: "80%" }} />
-    </Box>
-  ) : (
+  const handleCancel = () => {
+    navigate("/courses");
+  };
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        height="80vh"
+        gap={2}
+      >
+        <CircularProgress size={60} thickness={5} sx={{ color: "#4caf50" }} />
+        <Typography variant="h6" color="textSecondary">
+          Loading course form...
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
     <Box component="form" onSubmit={handleSave} sx={{ maxWidth: 600, mx: "auto", p: 4 }}>
-      <Typography variant="h5" align="center" fontWeight="bold">
+      <Typography variant="h5" align="center" fontWeight="bold" mb={3}>
         {editingCourse ? "Edit Course" : "Add New Course"}
       </Typography>
 
@@ -185,9 +205,28 @@ export default function AddCourses() {
         </Box>
       )}
 
-      <Button variant="contained" type="submit" sx={{ mt: 4, bgcolor: "#81c784" }}>
-        Save
-      </Button>
+      <Stack direction="row" spacing={2} mt={4} justifyContent="center">
+        <Button
+          variant="contained"
+          type="submit"
+          sx={{ bgcolor: "#81c784", minWidth: 100 }}
+          disabled={saving}
+        >
+          {saving ? (
+            <CircularProgress size={24} sx={{ color: "#fff" }} />
+          ) : (
+            "Save"
+          )}
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={handleCancel}
+          sx={{ borderColor: "#81c784", color: "#388e3c" }}
+          disabled={saving}
+        >
+          Cancel
+        </Button>
+      </Stack>
 
       <Dialog open={summaryOpen} onClose={handleCloseSummary} fullWidth>
         <DialogTitle>Course Saved</DialogTitle>

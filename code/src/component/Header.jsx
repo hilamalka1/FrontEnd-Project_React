@@ -24,7 +24,7 @@ export default function Header() {
     { label: 'Courses', path: '/courses' },
     { label: 'Assignments', path: '/assignments' },
     { label: 'Exams', path: '/exams' },
-    { label: 'Messages', path: '/events' },
+    { label: 'Event & Message', path: '/events' },
     { label: 'Support', path: '/support' },
   ];
 
