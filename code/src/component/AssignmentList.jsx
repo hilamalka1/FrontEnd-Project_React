@@ -15,7 +15,7 @@ export default function AssignmentList() {
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null); // מזהה של מטלה במחיקה
+  const [actionLoading, setActionLoading] = useState(null);
 
   useEffect(() => {
     listAssignments()
@@ -84,7 +84,7 @@ export default function AssignmentList() {
         <Table>
           <TableHead sx={{ backgroundColor: "#e8f5e9" }}>
             <TableRow>
-              {["Assignment Name", "Description", "Due Date", "Course Code", "Actions"].map((col) => (
+              {["Assignment Title", "Description", "Due Date", "Course Code", "Actions"].map((col) => (
                 <TableCell key={col} sx={{ fontWeight: "bold" }}>{col}</TableCell>
               ))}
             </TableRow>
@@ -93,7 +93,7 @@ export default function AssignmentList() {
             {assignments.length > 0 ? (
               assignments.map((a) => (
                 <TableRow key={a.id} hover>
-                  <TableCell>{a.assignmentName}</TableCell>
+                  <TableCell>{a.assignmentTitle}</TableCell>
                   <TableCell>{a.description}</TableCell>
                   <TableCell>{a.dueDate}</TableCell>
                   <TableCell>{a.courseCode}</TableCell>

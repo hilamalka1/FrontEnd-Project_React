@@ -5,7 +5,9 @@ import {
   Button,
   Typography,
   MenuItem,
-  CircularProgress
+  CircularProgress,
+  Alert,
+  Stack
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -28,6 +30,7 @@ export default function AddAssignment() {
     courseCode: "",
   });
   const [error, setError] = useState({});
+  const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
@@ -65,6 +68,7 @@ export default function AddAssignment() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setError((prev) => ({ ...prev, [name]: validateField(name, value) }));
+    setGeneralError("");
   };
 
   const handleSave = async (e) => {
@@ -78,7 +82,8 @@ export default function AddAssignment() {
 
     setError(newErrors);
     if (Object.values(newErrors).some(Boolean)) {
-      return alert("Please fill in all fields correctly");
+      setGeneralError("Please fill in all fields correctly");
+      return;
     }
 
     setLoading(true);
@@ -91,7 +96,7 @@ export default function AddAssignment() {
       navigate("/assignments");
     } catch (error) {
       console.error("Error saving assignment:", error);
-      alert("Error saving assignment");
+      setGeneralError("Error saving assignment");
     } finally {
       setLoading(false);
     }
@@ -120,103 +125,102 @@ export default function AddAssignment() {
   }
 
   return (
-    <Box
-      component="form"
-      onSubmit={handleSave}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        maxWidth: 500,
-        mx: "auto",
-        my: 4,
-        p: 4,
-        gap: 2,
-        boxShadow: 3,
-        borderRadius: 2,
-        bgcolor: "#f5f5f5",
-        width: "90%",
-      }}
-    >
-      <Typography variant="h5" align="center" fontWeight="bold">
+    <Box sx={{ p: 4, bgcolor: "#e8f5e9", minHeight: "100vh" }}>
+      <Typography variant="h4" align="center" mb={3} fontWeight="bold">
         {editingAssignment ? "Edit Assignment" : "Add New Assignment"}
       </Typography>
 
-      <TextField
-        label="Assignment Title *"
-        name="assignmentTitle"
-        value={formData.assignmentTitle}
-        onChange={handleChange}
-        error={!!error.assignmentTitle}
-        helperText={error.assignmentTitle}
-        fullWidth
-      />
-
-      <TextField
-        label="Description *"
-        name="description"
-        value={formData.description}
-        onChange={handleChange}
-        error={!!error.description}
-        helperText={error.description}
-        multiline
-        rows={3}
-        fullWidth
-      />
-
-      <TextField
-        label="Due Date *"
-        name="dueDate"
-        type="date"
-        value={formData.dueDate}
-        onChange={handleChange}
-        error={!!error.dueDate}
-        helperText={error.dueDate}
-        InputLabelProps={{ shrink: true }}
-        inputProps={{ min: new Date().toISOString().split("T")[0] }}
-        fullWidth
-      />
-
-      <TextField
-        select
-        label="Select Course *"
-        name="courseCode"
-        value={formData.courseCode}
-        onChange={handleChange}
-        error={!!error.courseCode}
-        helperText={error.courseCode}
-        fullWidth
+      <Box
+        component="form"
+        onSubmit={handleSave}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          maxWidth: 600,
+          mx: "auto",
+          p: 4,
+          gap: 2,
+          boxShadow: 3,
+          borderRadius: 2,
+          backgroundColor: "#ffffff",
+        }}
       >
-        {courses.length > 0 ? (
-          courses.map((course) => (
-            <MenuItem key={course.courseCode} value={course.courseCode}>
-              {course.courseName} ({course.courseCode})
-            </MenuItem>
-          ))
-        ) : (
-          <MenuItem disabled>No courses available</MenuItem>
-        )}
-      </TextField>
+        {generalError && <Alert severity="error">{generalError}</Alert>}
 
-      <Box display="flex" justifyContent="center" gap={2} mt={2}>
-        <Button
-          variant="contained"
-          type="submit"
-          sx={{ bgcolor: "#81c784", "&:hover": { bgcolor: "#66bb6a" }, minWidth: 100 }}
-          disabled={loading}
-        >
-          {loading ? (
-            <CircularProgress size={24} sx={{ color: "#fff" }} />
-          ) : editingAssignment ? "Update" : "Save"}
-        </Button>
+        <TextField
+          label="Assignment Title *"
+          name="assignmentTitle"
+          value={formData.assignmentTitle}
+          onChange={handleChange}
+          error={!!error.assignmentTitle}
+          helperText={error.assignmentTitle}
+          fullWidth
+        />
 
-        <Button
-          variant="outlined"
-          onClick={handleCancel}
-          sx={{ borderColor: "#81c784", color: "#388e3c" }}
-          disabled={loading}
+        <TextField
+          label="Description *"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          error={!!error.description}
+          helperText={error.description}
+          multiline
+          rows={3}
+          fullWidth
+        />
+
+        <TextField
+          label="Due Date *"
+          name="dueDate"
+          type="date"
+          value={formData.dueDate}
+          onChange={handleChange}
+          error={!!error.dueDate}
+          helperText={error.dueDate}
+          InputLabelProps={{ shrink: true }}
+          inputProps={{ min: new Date().toISOString().split("T")[0] }}
+          fullWidth
+        />
+
+        <TextField
+          select
+          label="Select Course *"
+          name="courseCode"
+          value={formData.courseCode}
+          onChange={handleChange}
+          error={!!error.courseCode}
+          helperText={error.courseCode}
+          fullWidth
         >
-          Cancel
-        </Button>
+          {courses.length > 0 ? (
+            courses.map((course) => (
+              <MenuItem key={course.courseCode} value={course.courseCode}>
+                {course.courseName} ({course.courseCode})
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem disabled>No courses available</MenuItem>
+          )}
+        </TextField>
+
+        <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading}
+            sx={{ minWidth: 140, bgcolor: "#4caf50", '&:hover': { bgcolor: "#388e3c" } }}
+          >
+            {loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : editingAssignment ? "Update" : "Save"}
+          </Button>
+
+          <Button
+            onClick={handleCancel}
+            variant="outlined"
+            sx={{ minWidth: 140, borderColor: "#4caf50", color: "#4caf50", '&:hover': { bgcolor: "#e8f5e9" } }}
+          >
+            Cancel
+          </Button>
+        </Stack>
       </Box>
     </Box>
   );

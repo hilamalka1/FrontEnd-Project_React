@@ -3,7 +3,7 @@ import {
   Box, Typography, MenuItem, Select, FormControl, InputLabel, Card,
   List, ListItem, ListItemIcon, ListItemText, Divider, Button, Avatar, CircularProgress
 } from "@mui/material";
-import { School, EmojiObjects, Info } from "@mui/icons-material";
+import { School, EmojiObjects, Info, Email } from "@mui/icons-material";
 import { collection, getDocs } from "firebase/firestore";
 import { firestore } from "../firebase/firebaseConfig";
 import FullCalendar from "@fullcalendar/react";
@@ -193,12 +193,24 @@ export default function Home() {
           <List sx={{ bgcolor: "#e8f5e9", borderRadius: 2 }}>
             {getStudentCourses().map((course) => (
               <React.Fragment key={course.id}>
-                <ListItem>
-                  <ListItemIcon><School /></ListItemIcon>
-                  <ListItemText
-                    primary={course.courseName}
-                    secondary={`Semester: ${course.semester} | Lecturer: ${course.lecturerName}`}
-                  />
+                <ListItem sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Box>
+                    <ListItemText
+                      primary={course.courseName}
+                      secondary={`Semester: ${course.semester} | Lecturer: ${course.lecturerName}`}
+                    />
+                  </Box>
+                  {course.lecturerEmail && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Email />}
+                      href={`mailto:${course.lecturerEmail}`}
+                      sx={{ borderColor: "#4caf50", color: "#4caf50", '&:hover': { bgcolor: "#e8f5e9" } }}
+                    >
+                      Contact Lecturer
+                    </Button>
+                  )}
                 </ListItem>
                 <Divider />
               </React.Fragment>
@@ -207,7 +219,7 @@ export default function Home() {
 
           <Box mt={4}>
             <Typography variant="h4" sx={{ textDecoration: "underline", mb: 1 }}>
-              🧪 Exams
+               Exams
             </Typography>
             {getStudentExams().map((ex) => {
               const course = courses.find((c) => c.courseCode === ex.courseCode);
@@ -220,7 +232,7 @@ export default function Home() {
             })}
 
             <Typography variant="h4" sx={{ mt: 3, textDecoration: "underline", mb: 1 }}>
-              📝 Assignments
+               Assignments
             </Typography>
             {getStudentAssignments().map((a) => {
               const course = courses.find((c) => c.courseCode === a.courseCode);
@@ -233,7 +245,7 @@ export default function Home() {
             })}
 
             <Typography variant="h4" sx={{ mt: 3, textDecoration: "underline", mb: 1 }}>
-              📢 Events
+               Events
             </Typography>
             {getStudentEvents().map((ev) => (
               <Typography key={ev.id} sx={{ fontSize: "1.1rem", mb: 1 }}>

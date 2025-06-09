@@ -53,7 +53,7 @@ export default function ExamList() {
   }
 
   return (
-    <Box sx={{ p: 4, bgcolor: "#f9fff9", minHeight: "100vh" }}>
+    <Box sx={{ p: 4, bgcolor: "with", minHeight: "100vh" }}>
       <Typography variant="h4" align="center" mb={3} fontWeight="bold">
         Exam Management
       </Typography>
