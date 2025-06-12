@@ -10,7 +10,6 @@ import {
   InputLabel,
   FormControl,
   FormHelperText,
-  Paper,
   Alert,
   Stack
 } from "@mui/material";
@@ -44,7 +43,17 @@ export default function AddStudent() {
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [courseOptions, setCourseOptions] = useState([]);
+
+  const degreeOptions = [
+    "Computer Science",
+    "Software Engineering",
+    "Business Administration",
+    "Biology",
+    "Psychology",
+    "Economics",
+    "Education",
+    "Architecture",
+  ];
 
   useEffect(() => {
     if (editingStudent) {
@@ -59,15 +68,6 @@ export default function AddStudent() {
       });
     }
   }, [editingStudent]);
-
-  useEffect(() => {
-    const fetchCourses = async () => {
-      const querySnapshot = await getDocs(collection(firestore, "courses"));
-      const courseNames = querySnapshot.docs.map((doc) => doc.data().courseName);
-      setCourseOptions(courseNames);
-    };
-    fetchCourses();
-  }, []);
 
   const validateName = (name) => /^[\u0590-\u05FFa-zA-Z]{2,}$/.test(name);
   const validateStudentId = (id) => /^\d{9}$/.test(id);
@@ -214,8 +214,8 @@ export default function AddStudent() {
         <FormControl fullWidth required error={!!errors.degreeProgram}>
           <InputLabel>Degree Program</InputLabel>
           <Select name="degreeProgram" value={formData.degreeProgram} label="Degree Program" onChange={handleChange}>
-            {courseOptions.map((course, index) => (
-              <MenuItem key={index} value={course}>{course}</MenuItem>
+            {degreeOptions.map((degree, index) => (
+              <MenuItem key={index} value={degree}>{degree}</MenuItem>
             ))}
           </Select>
           {errors.degreeProgram && <FormHelperText>{errors.degreeProgram}</FormHelperText>}

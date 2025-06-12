@@ -46,7 +46,7 @@ export default function ExamList() {
 
   if (loading) {
     return (
-      <Box minHeight="100vh" display="flex" justifyContent="center" alignItems="center" bgcolor="#f9fff9">
+      <Box minHeight="100vh" display="flex" justifyContent="center" alignItems="center" bgcolor="white">
         <CircularProgress size={60} color="success" />
       </Box>
     );

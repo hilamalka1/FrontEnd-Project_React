@@ -30,76 +30,79 @@ export default function Header() {
 
   const navLinks = [
     { label: 'Home Page', path: '/' },
-    { label: 'Info', path: '/info' }
   ];
 
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" sx={{ bgcolor: 'success.main' }}>
-        <Toolbar sx={{ direction: 'ltr', display: 'flex', gap: 2 }}>
-          <Box
-            component={Link}
-            to="/"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              textDecoration: 'none',
-              color: 'inherit',
-              mr: 2,
-            }}
-          >
-            <SchoolIcon sx={{ mr: 1 }} />
-            <Typography
-              variant="h6"
+        <Toolbar sx={{ justifyContent: 'space-between', direction: 'ltr' }}>
+          {/* Left side: logo and nav */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              component={Link}
+              to="/"
               sx={{
-                fontWeight: 'bold',
-                '&:hover': { textDecoration: 'underline' },
+                display: 'flex',
+                alignItems: 'center',
+                textDecoration: 'none',
+                color: 'inherit',
               }}
             >
-              OnBoard
-            </Typography>
-          </Box>
-
-          {/* Regular navigation links */}
-          {navLinks.map((item) => (
-            <Button
-              key={item.label}
-              component={Link}
-              to={item.path}
-              color="inherit"
-              sx={{ textTransform: 'none' }}
-            >
-              {item.label}
-            </Button>
-          ))}
-
-          {/* Dropdown menu for user management */}
-          <Button
-            color="inherit"
-            onClick={handleMenuOpen}
-            sx={{ textTransform: 'none' }}
-          >
-            User Management
-          </Button>
-          <Menu
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleMenuClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-          >
-            {managementLinks.map((item) => (
-              <MenuItem
-                key={item.label}
-                onClick={() => {
-                  navigate(item.path);
-                  handleMenuClose();
+              <SchoolIcon sx={{ mr: 1 }} />
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 'bold',
+                  '&:hover': { textDecoration: 'underline' },
                 }}
               >
+                OnBoard
+              </Typography>
+            </Box>
+
+            {/* Regular navigation links */}
+            {navLinks.map((item) => (
+              <Button
+                key={item.label}
+                component={Link}
+                to={item.path}
+                color="inherit"
+                sx={{ textTransform: 'none' }}
+              >
                 {item.label}
-              </MenuItem>
+              </Button>
             ))}
-          </Menu>
+          </Box>
+
+          {/* Right side: user management dropdown */}
+          <Box>
+            <Button
+              color="inherit"
+              onClick={handleMenuOpen}
+              sx={{ textTransform: 'none' }}
+            >
+              User Management
+            </Button>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleMenuClose}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              {managementLinks.map((item) => (
+                <MenuItem
+                  key={item.label}
+                  onClick={() => {
+                    navigate(item.path);
+                    handleMenuClose();
+                  }}
+                >
+                  {item.label}
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
         </Toolbar>
       </AppBar>
     </Box>

@@ -1,4 +1,4 @@
-// AddCourses.jsx – כולל עיצוב אחיד + ולידציה חיה מלאה + רספונסיביות
+// קובץ AddCourses.jsx – כולל עיצוב אחיד, ולידציה חכמה, ורספונסיביות מלאה
 
 import React, { useState, useEffect } from "react";
 import {
@@ -7,9 +7,9 @@ import {
   Checkbox, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions,
   CircularProgress, Alert, useMediaQuery
 } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { addCourse, updateCourse, listStudents } from "../firebase/Courses";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { firestore } from "../firebase/firebaseConfig";
 import { useTheme } from "@mui/material/styles";
 
@@ -47,6 +47,7 @@ export default function AddCourses() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams();
   const editingCourse = location.state?.course || null;
 
   useEffect(() => {
@@ -54,7 +55,20 @@ export default function AddCourses() {
       const studentsData = await listStudents();
       setStudents(studentsData);
 
-      if (editingCourse) {
+      if (id && !editingCourse) {
+        const courseRef = doc(firestore, "courses", id);
+        const courseSnap = await getDoc(courseRef);
+        if (courseSnap.exists()) {
+          const courseData = courseSnap.data();
+          setFormData({ ...courseData });
+          setSelectedStudents(
+            courseData.enrolledStudents?.map(s => ({
+              studentId: s.studentId,
+              grade: s.grade || 0
+            })) || []
+          );
+        }
+      } else if (editingCourse) {
         setFormData({ ...editingCourse });
         setSelectedStudents(
           editingCourse.enrolledStudents?.map(s => ({
@@ -70,134 +84,120 @@ export default function AddCourses() {
       setLoading(false);
     }
     loadData();
-  }, [editingCourse]);
+  }, [editingCourse, id]);
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
-  setFormData((prev) => ({ ...prev, [name]: value }));
-  setGeneralError("");
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setGeneralError("");
 
-  const newErrors = { ...errors };
-
-  if (name === "courseName" && !validateCourseName(value)) {
-    newErrors.courseName = "Course name must be at least 2 characters";
-  } else if (name === "creditPoints" && !value) {
-    newErrors.creditPoints = "Credit points are required";
-  } else if (name === "semester" && !value) {
-    newErrors.semester = "Semester is required";
-  } else if (name === "lecturerName" && !validateLecturerName(value)) {
-    newErrors.lecturerName = "Name must be Hebrew or English letters only and at least 3 characters";
-  } else if (name === "lecturerEmail" && !validateEmail(value)) {
-    newErrors.lecturerEmail = "Invalid email format";
-  } else if (name === "degreeProgram" && !value) {
-    newErrors.degreeProgram = "Degree program is required";
-  } else {
-    delete newErrors[name];
-  }
-
-  setErrors(newErrors);
-};
-
-const handleSelectStudents = (e) => {
-  const selectedIds = e.target.value;
-  setSelectedStudents(prev => {
-    const existing = prev.filter(s => selectedIds.includes(s.studentId));
-    const added = selectedIds.filter(id => !existing.some(s => s.studentId === id))
-      .map(id => ({ studentId: id, grade: 0 }));
-    return [...existing, ...added];
-  });
-};
-
-const handleGradeChange = (studentId, grade) => {
-  const parsed = parseInt(grade);
-  setSelectedStudents(prev =>
-    prev.map(s => s.studentId === studentId ? { ...s, grade: parsed } : s)
-  );
-};
-
-const handleSave = async (e) => {
-  e.preventDefault();
-  setSaving(true);
-  setGeneralError("");
-  const newErrors = {};
-
-  if (!validateCourseName(formData.courseName)) newErrors.courseName = "Course name must be at least 2 characters";
-  if (!formData.creditPoints) newErrors.creditPoints = "Credit points are required";
-  if (!formData.semester) newErrors.semester = "Semester is required";
-  if (!validateLecturerName(formData.lecturerName)) newErrors.lecturerName = "Name must be Hebrew or English letters only and at least 3 characters";
-  if (!validateEmail(formData.lecturerEmail)) newErrors.lecturerEmail = "Invalid email format";
-  if (!formData.degreeProgram) newErrors.degreeProgram = "Degree program is required";
-
-  const q = query(collection(firestore, "courses"), where("lecturerEmail", "==", formData.lecturerEmail));
-  const snapshot = await getDocs(q);
-  const emailExists = snapshot.docs.some(doc => {
-    if (editingCourse) return doc.id !== editingCourse.id;
-    return true;
-  });
-  if (emailExists) newErrors.lecturerEmail = "Email must be unique";
-
-  setErrors(newErrors);
-  if (Object.keys(newErrors).length > 0) {
-    setGeneralError("Please fix the errors before saving.");
-    setSaving(false);
-    return;
-  }
-
-  const enrolled = students
-    .filter(s => selectedStudents.some(sel => sel.studentId === s.studentId))
-    .map(s => {
-      const match = selectedStudents.find(sel => sel.studentId === s.studentId);
-      return {
-        studentId: s.studentId,
-        firstName: s.firstName,
-        lastName: s.lastName,
-        grade: match?.grade || 0,
-        completed: (match?.grade || 0) >= 60
-      };
-    });
-
-  const courseToSave = { ...formData, enrolledStudents: enrolled };
-
-  try {
-    if (editingCourse) {
-      await updateCourse(courseToSave);
+    const newErrors = { ...errors };
+    if (name === "courseName" && !validateCourseName(value)) {
+      newErrors.courseName = "Course name must be at least 2 characters";
+    } else if (name === "creditPoints" && !value) {
+      newErrors.creditPoints = "Credit points are required";
+    } else if (name === "semester" && !value) {
+      newErrors.semester = "Semester is required";
+    } else if (name === "lecturerName" && !validateLecturerName(value)) {
+      newErrors.lecturerName = "Name must be Hebrew or English letters only and at least 3 characters";
+    } else if (name === "lecturerEmail") {
+      if (!validateEmail(value)) {
+        newErrors.lecturerEmail = "Invalid email format";
+      } else if (value.trim().toLowerCase() === "g") {
+        newErrors.lecturerEmail = "Email cannot be just 'g'";
+      }
+    } else if (name === "degreeProgram" && !value) {
+      newErrors.degreeProgram = "Degree program is required";
     } else {
-      await addCourse(courseToSave);
+      delete newErrors[name];
     }
-    setSummaryOpen(true);
-  } catch (err) {
-    setGeneralError("Failed to save course");
-    console.error(err);
-  } finally {
-    setSaving(false);
-  }
-};
+    setErrors(newErrors);
+  };
 
-const handleCancel = () => navigate("/courses");
-const handleCloseSummary = () => { setSummaryOpen(false); navigate("/courses"); };
+  const handleSelectStudents = (e) => {
+    const selectedIds = e.target.value;
+    setSelectedStudents(prev => {
+      const existing = prev.filter(s => selectedIds.includes(s.studentId));
+      const added = selectedIds.filter(id => !existing.some(s => s.studentId === id))
+        .map(id => ({ studentId: id, grade: 0 }));
+      return [...existing, ...added];
+    });
+  };
 
-return (
+  const handleGradeChange = (studentId, grade) => {
+    const parsed = parseInt(grade);
+    setSelectedStudents(prev =>
+      prev.map(s => s.studentId === studentId ? { ...s, grade: parsed } : s)
+    );
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setGeneralError("");
+    const newErrors = {};
+
+    if (!validateCourseName(formData.courseName)) newErrors.courseName = "Course name must be at least 2 characters";
+    if (!formData.creditPoints) newErrors.creditPoints = "Credit points are required";
+    if (!formData.semester) newErrors.semester = "Semester is required";
+    if (!validateLecturerName(formData.lecturerName)) newErrors.lecturerName = "Name must be Hebrew or English letters only and at least 3 characters";
+    if (!validateEmail(formData.lecturerEmail)) newErrors.lecturerEmail = "Invalid email format";
+    if (formData.lecturerEmail.trim().toLowerCase() === "g") newErrors.lecturerEmail = "Email cannot be just 'g'";
+    if (!formData.degreeProgram) newErrors.degreeProgram = "Degree program is required";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setGeneralError("Please fix the errors before saving.");
+      setSaving(false);
+      return;
+    }
+
+    const enrolled = students
+      .filter(s => selectedStudents.some(sel => sel.studentId === s.studentId))
+      .map(s => {
+        const match = selectedStudents.find(sel => sel.studentId === s.studentId);
+        return {
+          studentId: s.studentId,
+          firstName: s.firstName,
+          lastName: s.lastName,
+          grade: match?.grade || 0,
+          completed: (match?.grade || 0) >= 60
+        };
+      });
+
+    const courseToSave = { ...formData, enrolledStudents: enrolled };
+
+    try {
+      if (editingCourse || id) {
+        await updateCourse(courseToSave);
+      } else {
+        await addCourse(courseToSave);
+      }
+      setSummaryOpen(true);
+    } catch (err) {
+      setGeneralError("Failed to save course");
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => navigate("/courses");
+  const handleCloseSummary = () => { setSummaryOpen(false); navigate("/courses"); };
+
+  if (loading) return <Box p={5}><CircularProgress /></Box>;
+
+  return (
     <Box sx={{ p: 4, bgcolor: "#e8f5e9", minHeight: "100vh" }}>
       <Typography variant="h4" align="center" mb={3} fontWeight="bold">
-        {editingCourse ? "Edit Course" : "Add New Course"}
+        {editingCourse || id ? "Edit Course" : "Add New Course"}
       </Typography>
 
-      <Box
-        component="form"
-        onSubmit={handleSave}
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          width: "100%",
-          maxWidth: isMobile ? "100%" : 600,
-          mx: "auto",
-          p: 2,
-          gap: 2,
-          boxShadow: 3,
-          borderRadius: 2,
-          backgroundColor: "#ffffff"
-        }}
-      >
+      <Box component="form" onSubmit={handleSave} sx={{
+        display: "flex", flexDirection: "column", width: "100%",
+        maxWidth: isMobile ? "100%" : 600, mx: "auto", p: 2, gap: 2,
+        boxShadow: 3, borderRadius: 2, backgroundColor: "#ffffff"
+      }}>
         {generalError && <Alert severity="error">{generalError}</Alert>}
 
         <TextField fullWidth label="Course Name" name="courseName" value={formData.courseName} onChange={handleChange} error={!!errors.courseName} helperText={errors.courseName} />

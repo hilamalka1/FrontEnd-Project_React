@@ -1,4 +1,5 @@
-// CourseList.jsx – גרסה עם אפשרות עדכון ציונים ישירות מהטבלה
+// קובץ CourseList.jsx – אייקון GroupAdd צמוד לעט עריכה + פופ-אפ שמציג את כל הסטודנטים עם אפשרות להוספה והסרה
+
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
@@ -6,12 +7,11 @@ import {
   DialogActions, MenuItem, Select, InputLabel, FormControl, OutlinedInput,
   Checkbox, ListItemText, Chip, Stack, Tooltip, CircularProgress, TextField
 } from "@mui/material";
-import { Add, PersonAdd, Edit, Delete, RemoveCircle, Grade } from "@mui/icons-material";
+import { Add, Edit, Delete, RemoveCircle, Grade, GroupAdd } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import {
   listStudents,
   deleteCourseByCode,
-  getCourseByCode,
   updateCourse
 } from "../firebase/Courses";
 import { getDocs, collection } from "firebase/firestore";
@@ -21,20 +21,18 @@ export default function CourseList() {
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedDegree, setSelectedDegree] = useState("");
-  const [selectedStudents, setSelectedStudents] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState(null);
-  const [originalStudents, setOriginalStudents] = useState([]);
-  const [gradeDialog, setGradeDialog] = useState({ open: false, student: null, course: null });
-  const [newGrade, setNewGrade] = useState("");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [gradeDialog, setGradeDialog] = useState({ open: false, student: null, course: null });
+  const [newGrade, setNewGrade] = useState("");
+  const [addDialog, setAddDialog] = useState({ open: false, course: null, selected: [] });
   const navigate = useNavigate();
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const courseSnap = await getDocs(collection(firestore, "courses"));
-        const coursesData = courseSnap.docs.map((doc) => doc.data());
+        const coursesData = courseSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         const studentsData = await listStudents();
         setCourses(coursesData);
         setStudents(studentsData);
@@ -52,7 +50,7 @@ export default function CourseList() {
     return s ? `${s.firstName} ${s.lastName}` : id;
   };
 
-  const handleEditCourse = (course) => navigate("/add-course", { state: { course } });
+  const handleEditCourse = (course) => navigate(`/edit-course/${course.id}`, { state: { course } });
 
   const handleDeleteCourse = async (courseCode) => {
     if (!window.confirm("Delete this course?")) return;
@@ -76,6 +74,42 @@ export default function CourseList() {
     );
   };
 
+  const handleOpenAddStudents = (course) => {
+    const enrolledIds = course.enrolledStudents?.map((s) => s.studentId) || [];
+    setAddDialog({
+      open: true,
+      course,
+      selected: students.map((s) => enrolledIds.includes(s.studentId) ? s.studentId : null).filter(Boolean)
+    });
+  };
+
+  const handleAddStudentsConfirm = async () => {
+    const selected = addDialog.selected;
+    const newEnrolled = students
+      .filter((s) => selected.includes(s.studentId))
+      .map((s) => {
+        const existing = addDialog.course.enrolledStudents?.find((e) => e.studentId === s.studentId);
+        return {
+          studentId: s.studentId,
+          firstName: s.firstName,
+          lastName: s.lastName,
+          grade: existing?.grade || 0,
+          completed: (existing?.grade || 0) >= 60
+        };
+      });
+
+    const updatedCourse = {
+      ...addDialog.course,
+      enrolledStudents: newEnrolled
+    };
+
+    await updateCourse(updatedCourse);
+    setCourses((prev) =>
+      prev.map((c) => (c.courseCode === updatedCourse.courseCode ? updatedCourse : c))
+    );
+    setAddDialog({ open: false, course: null, selected: [] });
+  };
+
   const handleUpdateGrade = async () => {
     const parsed = parseInt(newGrade);
     const updatedCourse = { ...gradeDialog.course };
@@ -93,11 +127,9 @@ export default function CourseList() {
   };
 
   const tableHeaders = ["Code", "Name", "Credits", "Semester", "Lecturer", "Degree", "Students", "Actions"];
-
   const filtered = courses.filter((c) =>
     selectedDegree ? c.degreeProgram === selectedDegree : true
   );
-
   const uniqueDegrees = [...new Set(courses.map((c) => c.degreeProgram).filter(Boolean))];
 
   if (loading) {
@@ -158,10 +190,13 @@ export default function CourseList() {
                     ) : "-"}
                   </TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleEditCourse(course)} title="Edit Course"><Edit /></IconButton>
-                    <IconButton onClick={() => handleDeleteCourse(course.courseCode)} title="Delete Course" color="error" disabled={actionLoading === course.courseCode}>
-                      {actionLoading === course.courseCode ? <CircularProgress size={20} thickness={5} /> : <Delete />}
-                    </IconButton>
+                    <Stack direction="row" spacing={1}>
+                      <IconButton onClick={() => handleOpenAddStudents(course)} title="Manage Students"><GroupAdd /></IconButton>
+                      <IconButton onClick={() => handleEditCourse(course)} title="Edit Course"><Edit /></IconButton>
+                      <IconButton onClick={() => handleDeleteCourse(course.courseCode)} title="Delete Course" color="error" disabled={actionLoading === course.courseCode}>
+                        {actionLoading === course.courseCode ? <CircularProgress size={20} thickness={5} /> : <Delete />}
+                      </IconButton>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))
@@ -189,6 +224,40 @@ export default function CourseList() {
         <DialogActions>
           <Button onClick={() => setGradeDialog({ open: false, student: null, course: null })}>Cancel</Button>
           <Button onClick={handleUpdateGrade} variant="contained" sx={{ bgcolor: "#81c784" }}>Update</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={addDialog.open} onClose={() => setAddDialog({ open: false, course: null, selected: [] })} fullWidth maxWidth="sm">
+        <DialogTitle>Manage Students in Course</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Select Students</InputLabel>
+            <Select
+              multiple
+              value={addDialog.selected}
+              onChange={(e) => setAddDialog({ ...addDialog, selected: e.target.value })}
+              input={<OutlinedInput label="Select Students" />}
+              renderValue={(selected) => selected.map((id) => getStudentName(id)).join(", ")}
+            >
+              {students.map((student) => (
+                <MenuItem key={student.studentId} value={student.studentId}>
+                  <Checkbox checked={addDialog.selected.includes(student.studentId)} />
+                  <ListItemText primary={`${student.firstName} ${student.lastName}`} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddDialog({ open: false, course: null, selected: [] })}>Cancel</Button>
+          <Button
+            onClick={handleAddStudentsConfirm}
+            variant="contained"
+            disabled={!addDialog.selected.length}
+            sx={{ bgcolor: "#81c784" }}
+          >
+            Add student
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

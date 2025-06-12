@@ -104,6 +104,8 @@ export default function App() {
           <Route path='/events' element={<EventList />} />
           <Route path='/add-event' element={<AddEvent />} />
           <Route path='/support' element={<Support />} />
+          <Route path='/edit-course/:id' element={<AddCourses />} />
+
         </Routes>
       </Box>
     </StudentProvider>
