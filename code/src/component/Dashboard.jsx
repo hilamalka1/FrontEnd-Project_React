@@ -106,7 +106,7 @@ export default function Dashboard() {
       }}
     >
       <Typography variant="h3" fontWeight={700} gutterBottom>
-        Dashboard for {selectedStudent.firstName} {selectedStudent.lastName}
+       {selectedStudent.firstName} {selectedStudent.lastName} Dashboard  
       </Typography>
 
       <Grid container spacing={4} justifyContent="center">

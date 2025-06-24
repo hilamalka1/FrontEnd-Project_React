@@ -19,7 +19,7 @@ export default function Support() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 800); // Simulate a short delay for animation/loading
+    }, 800); 
 
     return () => clearTimeout(timer);
   }, []);

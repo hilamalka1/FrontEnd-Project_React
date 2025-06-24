@@ -13,30 +13,33 @@ import {
 
 export default function AssignmentList() {
   const navigate = useNavigate();
-  const [assignments, setAssignments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null);
 
+  const [assignments,   setAssignments]   = useState([]);   // נתונים לטבלה
+  const [loading,       setLoading]       = useState(true); // טעינת רשימה ראשונית
+  const [actionLoading, setActionLoading] = useState(null); // ספינר ייעודי לפעולה בשורה
+
+  // ---------- EFFECT: טעינת מטלות ----------
   useEffect(() => {
     listAssignments()
-      .then((data) => setAssignments(data))
-      .catch((err) => {
+      .then(setAssignments)
+      .catch(err => {
         console.error("Error loading assignments:", err);
         alert("Failed to load assignments");
       })
       .finally(() => setLoading(false));
   }, []);
 
-  const handleEdit = (assignment) => {
+  // ניווט עם פרטי המטלה לעריכה
+  const handleEdit = (assignment) =>
     navigate("/add-assignment", { state: { assignment } });
-  };
 
+  // מחיקה עם אישור משתמש וספינר בשורה הספציפית
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this assignment?")) return;
     setActionLoading(id);
     try {
       await deleteAssignment(id);
-      setAssignments((prev) => prev.filter((a) => a.id !== id));
+      setAssignments(prev => prev.filter(a => a.id !== id)); // עדכון מקומי
     } catch (error) {
       console.error("Failed to delete:", error);
       alert("Error deleting assignment");
@@ -47,14 +50,7 @@ export default function AssignmentList() {
 
   if (loading) {
     return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        height="80vh"
-        gap={2}
-      >
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="80vh" gap={2}>
         <CircularProgress size={60} thickness={5} sx={{ color: "#4caf50" }} />
         <Typography variant="h6" color="textSecondary">
           Loading assignments...
@@ -69,6 +65,7 @@ export default function AssignmentList() {
         Assignment Management
       </Typography>
 
+      {/* כפתור הוספת מטלה */}
       <Box display="flex" justifyContent="center" mb={3}>
         <Button
           variant="contained"
@@ -80,23 +77,27 @@ export default function AssignmentList() {
         </Button>
       </Box>
 
+      {/* טבלת מטלות */}
       <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
         <Table>
           <TableHead sx={{ backgroundColor: "#e8f5e9" }}>
             <TableRow>
-              {["Assignment Title", "Description", "Due Date", "Course Code", "Actions"].map((col) => (
+              {["Assignment Title", "Description", "Due Date", "Course Code", "Actions"].map(col => (
                 <TableCell key={col} sx={{ fontWeight: "bold" }}>{col}</TableCell>
               ))}
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {assignments.length > 0 ? (
-              assignments.map((a) => (
+            {assignments.length ? (
+              assignments.map(a => (
                 <TableRow key={a.id} hover>
                   <TableCell>{a.assignmentTitle}</TableCell>
                   <TableCell>{a.description}</TableCell>
                   <TableCell>{a.dueDate}</TableCell>
                   <TableCell>{a.courseCode}</TableCell>
+
+                  {/* פעולות עריכה / מחיקה */}
                   <TableCell>
                     <IconButton
                       onClick={() => handleEdit(a)}

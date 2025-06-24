@@ -1,4 +1,3 @@
-// StudentList.jsx – עם פעולה ממוקדת ושדרוג טעינה של עמוד
 import React, { useEffect, useState } from "react";
 import {
   Box,

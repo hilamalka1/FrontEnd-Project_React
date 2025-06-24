@@ -36,7 +36,6 @@ export default function Header() {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" sx={{ bgcolor: 'success.main' }}>
         <Toolbar sx={{ justifyContent: 'space-between', direction: 'ltr' }}>
-          {/* Left side: logo and nav */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
               component={Link}
@@ -60,7 +59,7 @@ export default function Header() {
               </Typography>
             </Box>
 
-            {/* Regular navigation links */}
+
             {navLinks.map((item) => (
               <Button
                 key={item.label}
@@ -74,7 +73,7 @@ export default function Header() {
             ))}
           </Box>
 
-          {/* Right side: user management dropdown */}
+
           <Box>
             <Button
               color="inherit"

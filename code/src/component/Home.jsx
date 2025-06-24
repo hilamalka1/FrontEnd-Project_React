@@ -13,6 +13,7 @@ import { useStudent } from "./StudentContext";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
+  // שימוש ב־Context לניהול סטודנטים וסטודנט נבחר
   const {
     selectedStudentId,
     selectedStudent,
@@ -30,6 +31,8 @@ export default function Home() {
   const navigate = useNavigate();
 
   const semesterOptions = ["Semester A", "Semester B", "Summer", "All Year"];
+
+  //  פונקציית עזר להמיר תאריך מ־timestamp למחרוזת yyyy-mm-dd
   const toDateString = (timestamp) =>
     timestamp?.toDate?.().toISOString().split("T")[0] ?? timestamp;
 
@@ -44,6 +47,7 @@ export default function Home() {
           getDocs(collection(firestore, "events")),
         ]);
 
+        //  עדכון סטודנטים ל־Context הכללי
         updateStudents(sSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
         setCourses(cSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
         setAssignments(aSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
@@ -66,11 +70,13 @@ export default function Home() {
         (selectedSemester === "All Year" || c.semester === selectedSemester)
     );
 
+  //  מחזיר את כל הקורסים של הסטודנט בלי קשר לסמסטר (לשימוש באירועים ומבחנים)
   const getAllStudentCourses = () =>
     courses.filter((c) =>
       c.enrolledStudents?.some((s) => s.studentId === selectedStudentId)
     );
 
+  // 🟢 מסנן אירועים רלוונטיים לסטודנט
   const getStudentEvents = () =>
     events.filter((ev) => {
       if (ev.audienceType === "all") return true;
@@ -98,7 +104,7 @@ export default function Home() {
       id: `event-${ev.id}`,
       title: ev.eventName,
       date: toDateString(ev.eventDate),
-      backgroundColor: "#2196f3",
+      backgroundColor: "#2196f3", 
     })),
     ...getStudentExams().map((ex) => ({
       id: `exam-${ex.id}`,
@@ -165,6 +171,7 @@ export default function Home() {
             </Box>
           </Card>
 
+          {/*  כפתור מעבר ללוח מחוונים (Dashboard) */}
           <Button
             variant="contained"
             startIcon={<Info />}
@@ -190,6 +197,7 @@ export default function Home() {
             </Select>
           </FormControl>
 
+          {/*  רשימת קורסים עם לחצן שליחת מייל למרצה */}
           <List sx={{ bgcolor: "#e8f5e9", borderRadius: 2 }}>
             {getStudentCourses().map((course) => (
               <React.Fragment key={course.id}>
@@ -217,6 +225,7 @@ export default function Home() {
             ))}
           </List>
 
+          {/*  רשימות מבחנים, מטלות ואירועים בפורמט טקסטואלי */}
           <Box mt={4}>
             <Typography variant="h4" sx={{ textDecoration: "underline", mb: 1 }}>
                Exams

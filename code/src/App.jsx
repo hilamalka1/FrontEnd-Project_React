@@ -6,7 +6,6 @@ import { StudentProvider } from './component/StudentContext';
 import Header from './component/Header';
 import AddEvent from './component/AddEvent';
 import EventList from './component/EventList';
-import Info from './component/Info';
 import AddStudent from './component/AddStudent';
 import StudentList from './component/StudentList';
 import Home from './component/Home';
@@ -17,7 +16,7 @@ import AddAssignment from './component/AddAssignment';
 import ExamList from './component/ExamList';
 import AddExam from './component/AddExam';
 import Support from './component/Support';
-import Dashboard from './component/Dashboard'; // ✅ הייבוא החסר
+import Dashboard from './component/Dashboard';
 
 export default function App() {
   useEffect(() => {
@@ -90,8 +89,7 @@ export default function App() {
         <Routes>
           <Route path='/' element={<Home />} />
           <Route path='/header' element={<Header />} />
-          <Route path='/info' element={<Info />} />
-          <Route path='/dashboard' element={<Dashboard />} /> {/* ✅ נתיב חדש */}
+          <Route path='/dashboard' element={<Dashboard />} />
           <Route path='/studentinfo' element={<AddStudent />} />
           <Route path='/students' element={<StudentList />} />
           <Route path='/courses' element={<CourseList />} />
@@ -105,7 +103,6 @@ export default function App() {
           <Route path='/add-event' element={<AddEvent />} />
           <Route path='/support' element={<Support />} />
           <Route path='/edit-course/:id' element={<AddCourses />} />
-
         </Routes>
       </Box>
     </StudentProvider>

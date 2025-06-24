@@ -16,43 +16,28 @@ export const StudentProvider = ({ children }) => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [students, setStudents] = useState([]);
 
-  // שליפת סטודנט מה-localStorage
-  useEffect(() => {
-    const savedStudentId = localStorage.getItem('selectedStudentId');
-    if (savedStudentId) {
-      setSelectedStudentId(savedStudentId);
-    }
-  }, []);
-
-  // שמירה אוטומטית כשמשתנה
-  useEffect(() => {
-    if (selectedStudentId) {
-      localStorage.setItem('selectedStudentId', selectedStudentId);
-    }
-  }, [selectedStudentId]);
-
   // עדכון אובייקט סטודנט אם יש רשימה ובחירה
   useEffect(() => {
     if (selectedStudentId && students.length > 0) {
-      const student = students.find(s => s.studentId === selectedStudentId || s.id === selectedStudentId);
+      const student = students.find(
+        s => s.studentId === selectedStudentId || s.id === selectedStudentId
+      );
       setSelectedStudent(student || null);
+    } else {
+      setSelectedStudent(null);
     }
   }, [selectedStudentId, students]);
 
   const updateSelectedStudent = (studentId) => {
     setSelectedStudentId(studentId);
-    const student = students.find(s => s.studentId === studentId || s.id === studentId);
+    const student = students.find(
+      s => s.studentId === studentId || s.id === studentId
+    );
     setSelectedStudent(student || null);
   };
 
   const updateStudents = (studentsList) => {
     setStudents(studentsList);
-  };
-
-  const clearSelection = () => {
-    setSelectedStudentId('');
-    setSelectedStudent(null);
-    localStorage.removeItem('selectedStudentId');
   };
 
   return (
@@ -62,8 +47,7 @@ export const StudentProvider = ({ children }) => {
         selectedStudent,
         students,
         updateSelectedStudent,
-        updateStudents,
-        clearSelection
+        updateStudents
       }}
     >
       {children}
